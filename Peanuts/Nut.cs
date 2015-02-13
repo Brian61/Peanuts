@@ -84,10 +84,6 @@ namespace Peanuts
         //    return _types[id].Name;
         //}
 
-        protected Nut()
-        {
-        }
-
         /// <summary>
         /// This method must be supplied by Nut subtypes and should return a copy of the subtype instance.
         /// Users of the library should use either the ShallowNutAbc or DeepNutAbc class as a base class 
@@ -115,7 +111,8 @@ namespace Peanuts
     {
         public sealed override Nut Clone()
         {
-            return this.DeepClone();
+            //return this.DeepClone();
+            return this.DeepCloneObject() as Nut;
         }
     }
 }
