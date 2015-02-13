@@ -1,0 +1,52 @@
+﻿Peanuts
+A lightweight, data driven, Entity Component System C# library intended for roguelike games.
+
+Peanuts is intended to be easy to use.  
+
+First, naming; the names Entity, Component, and System are heavily used in numerous libraries
+and frameworks, including some that you may want to use in your project(s).  For that reason
+Peanuts uses a non-standard set of names to describe the various parts of the ECS.
+
+The Entity concept in Peanuts is encapsulated in the Bag class.  Peanut's base component class
+is named Nut.  Systems in Peanuts are called Processes and supported via the IProcess interface
+and the ProcessBase abstract class.
+
+Two useful related concepts are encapsulated in the Mix and Vendor classes.  The Mix class is
+a custom bitset that describes a collection of Nut subtypes contained in a Bag or used by a 
+Process.  The Vendor class is a set of Bag instances used by one or more Processes.
+
+The data-driven aspect of Peanuts is encapsulated in the pair of classes: Recipe and RecipeBook.
+Instances of RecipeBook are created by loading a Json text which describes a dictionary of 
+Recipes by name, and each Recipe by a dictionary of Nut subtypes by the subtype name.  The hard
+work of Json -> C# object conversion is done using the Json.Net package.  Thus making your 
+custom Nut subtype work seamlessly with the library is pretty simple.  A special pseudo-subtype
+exists for Recipes, this pseudo-subtype is given the name Prototype and its value is simply the
+name of another recipe.  All the Nut subtypes (and any Prototype) in that recipe are copied into
+the current recipe.
+
+The Peanut library supports saving and loading of Vendor instances (along with all contained Bags
+and Nuts) through serialization via Json.Net.
+
+If you are unfamiliar with Entity Component Systems, you probably want to read up on them some 
+before using Peanut.  However, as ECS implementations go, I hope Peanut is one of the easiest
+to use overall.
+
+Some notes on shortcomings:  
+
+Performance:
+At present Peanuts is single threaded only.  That may change in the
+future but requires quite a bit of work.  Performance should be adequate for roguelike and
+other turn based games, it may, or may not, be good enough for simple real time games.  The two
+biggest shortcomings of Peanuts in regards to performance are; first, the dual id to object lookup 
+using hashtables commonly required by Processes; and second, the use of objects rather than 
+contiguous arrays of structs for Nuts (Components).  Perhaps a third is that supplying object 
+pools for Bags is not supported and for Nut subtypes is left to the user (and perhaps not
+possible without a rewrite of Peanuts).
+
+Documentation:
+This document, together with the rather sparse comments on the public interface in the source files,
+is all that exists at present.
+
+Samples:
+None at this time.  I plan to incorporate this library into my current roguelike game project which
+should provide some samples of usage.  Not there quite yet.
