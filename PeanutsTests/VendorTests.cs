@@ -179,7 +179,7 @@ namespace Peanuts.Tests
             Assert.DoesNotThrow(() => proc = new MockProcess(vendor, typeof (MockNutA)));
             Assert.AreEqual(1, proc.NotifiedBags.Count);
             Bag bagB = null;
-            Assert.DoesNotThrow(() => bagB = proc.NotifiedBags[0]);
+            Assert.DoesNotThrow(() => bagB = vendor.Get(proc.NotifiedBags[0]));
             Assert.AreSame(bagA, bagB);
         }
 

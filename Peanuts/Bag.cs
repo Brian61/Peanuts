@@ -11,7 +11,7 @@ namespace Peanuts
     public sealed class Bag
     {
         private readonly Dictionary<Type, Nut> _nutsByType;
-        private readonly Mix _mask;
+        internal readonly Mix Mask;
 
         /// <summary>
         /// The unique integer id of the Bag instance.
@@ -28,7 +28,7 @@ namespace Peanuts
             Id = id;
             Peanuts.BagIdGenerator.EnsureGreaterThan(id);
             _nutsByType = contents;
-            _mask = new Mix(contents.Keys);
+            Mask = new Mix(contents.Keys);
         }
 
         internal Bag(IEnumerable<Nut> nuts)
@@ -38,7 +38,7 @@ namespace Peanuts
             {
                 _nutsByType[p.GetType()] = p;
             }
-            _mask = new Mix(_nutsByType.Keys);
+            Mask = new Mix(_nutsByType.Keys);
             Id = Peanuts.BagIdGenerator.Next();
         }
  
@@ -80,7 +80,7 @@ namespace Peanuts
         /// <returns>True if all of the subtypes indicated by key exist in this Bag.</returns>
         public bool Contains(Mix key)
         {
-            return key.KeyFitsLock(_mask);
+            return key.KeyFitsLock(Mask);
         }
 
         internal void Add(Nut nut)
@@ -88,7 +88,7 @@ namespace Peanuts
             var nutType = nut.GetType();
             var pid = Peanuts.GetId(nutType);
             _nutsByType[nutType] = nut;
-            _mask.Set(pid);
+            Mask.Set(pid);
         }
 
         internal void Remove(Nut nut)
@@ -96,20 +96,20 @@ namespace Peanuts
             var nutType = nut.GetType();
             var pid = Peanuts.GetId(nutType);
             _nutsByType.Remove(nutType);
-            _mask.Clear(pid);
+            Mask.Clear(pid);
         }
 
         internal void Morph(Bag prototype)
         {
-            var proto = prototype._mask;
+            var proto = prototype.Mask;
             for (var i = 0; i < Peanuts.NumberOfTypes(); i++)
             {
-                if (_mask.IsSet(i))
+                if (Mask.IsSet(i))
                 {
                     if (proto.IsSet(i))
                         continue;
                     _nutsByType.Remove(Peanuts.GetType(i));
-                    _mask.Clear(i);
+                    Mask.Clear(i);
                 }
                 else
                 {
@@ -117,7 +117,7 @@ namespace Peanuts
                         continue;
                     var nutType = Peanuts.GetType(i);
                     _nutsByType[nutType] = prototype._nutsByType[nutType].Clone() as Nut;
-                    _mask.Set(i);
+                    Mask.Set(i);
                 }
             }
         }
@@ -125,15 +125,20 @@ namespace Peanuts
         internal void ClearAll()
         {
             _nutsByType.Clear();
-            _mask.ClearAll();
+            Mask.ClearAll();
         }
     }
 
     /// <summary>
     /// For internal use only.
     /// </summary>
+    /// <exclude/>
     public class BagSerializer : JsonConverter
     {
+        /// <summary>
+        /// For internal use only.
+        /// </summary>
+        /// <exclude/>
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var bag = (Bag) value;
@@ -149,6 +154,10 @@ namespace Peanuts
             writer.WriteEndObject();
         }
 
+        /// <summary>
+        /// For internal use only.
+        /// </summary>
+        /// <exclude/>
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType != JsonToken.StartObject)
@@ -179,6 +188,10 @@ namespace Peanuts
             return new Bag(bid, dict);
         }
 
+        /// <summary>
+        /// For internal use only.
+        /// </summary>
+        /// <exclude/>
         public override bool CanConvert(Type objectType)
         {
             return typeof(Bag).IsAssignableFrom(objectType);

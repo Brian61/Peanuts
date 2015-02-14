@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Peanuts.Tests
 {
     public class MockProcess : Process, IProcess
     {
-        //public List<int> CurrentMatches = new List<int>();
-        public List<Bag> NotifiedBags = new List<Bag>(); 
+        public List<int> NotifiedBags = new List<int>(); 
 
         public MockProcess(Vendor vendor, params Type[] requiredNutTypes) 
             : base(vendor, requiredNutTypes)
         {
         }
 
-        void IProcess.OnChangeBagMix(Bag bag)
+        void IProcess.OnChangeBagMix(int id, Mix lockMix)
         {
-            base.OnChangeBagMix(bag);
-            NotifiedBags.Add(bag);
+            base.OnChangeBagMix(id, lockMix);
+            NotifiedBags.Add(id);
         }
 
         public IEnumerable<int> GetMatchingBagIds()

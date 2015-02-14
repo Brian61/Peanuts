@@ -24,14 +24,24 @@ namespace Peanuts
                 _performInit();
         }
 
+        /// <summary>
+        /// IdGenerator serializeable with Json.Net
+        /// Used to generate contextually unique identifier integers for Bag instances.
+        /// </summary>
         public static IdGenerator BagIdGenerator = new IdGenerator();
 
+        /// <summary>
+        /// OutputSettings is an instance of JsonSerializerSettings for use with Json.Net.
+        /// </summary>
         public static readonly JsonSerializerSettings OutputSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Objects,
             TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
         };
 
+        /// <summary>
+        /// InputSettings is an instance of JsonSerializerSettings for use with Json.Net.
+        /// </summary>
         public static readonly JsonSerializerSettings InputSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Objects

@@ -57,13 +57,14 @@ namespace Peanuts
         /// Called internally whenever a mix changes for a Bag instance of potential interest
         /// to this Process.  Bag instances may be added or removed from the tracked list.
         /// </summary>
-        /// <param name="bag">The Bag instance that has a changed mix.</param>
-        public void OnChangeBagMix(Bag bag)
+        /// <param name="id">The contextually unique integer identifier for the Bag instance.</param>
+        /// <param name="lockMix">The Mix instance describing the set of Nut subtypes in the Bag.</param>
+        public void OnChangeBagMix(int id, Mix lockMix)
         {
-            if (bag.Contains(_key))
-                _bagIds.Add(bag.Id);
+            if (_key.KeyFitsLock(lockMix))
+                _bagIds.Add(id);
             else
-                _bagIds.Remove(bag.Id);
+                _bagIds.Remove(id);
         }
 
         /// <summary>
