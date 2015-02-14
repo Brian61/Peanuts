@@ -51,7 +51,7 @@ namespace Peanuts
                 _book.Get(_prototype).FillIn(recipe);
             foreach (var entry in _ingredients)
             {
-                var nutType = Nut.GetType(entry.Key);
+                var nutType = Peanuts.GetType(entry.Key);
                 var ingredient = (Nut) entry.Value.ToObject(nutType);
                 recipe[entry.Key] = ingredient;
             }

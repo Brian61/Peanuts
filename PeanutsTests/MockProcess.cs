@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Peanuts.Tests
 {
-    public class MockProcess : ProcessBase, IProcess
+    public class MockProcess : Process, IProcess
     {
         //public List<int> CurrentMatches = new List<int>();
         public List<Bag> NotifiedBags = new List<Bag>(); 

@@ -38,17 +38,12 @@ namespace Peanuts
 
         public Bag MakeBag(Bag prototype)
         {
-            return MakeBag(prototype.GetAll().Select(p => p.Clone()).ToArray());
+            return MakeBag(prototype.GetAll().Select(p => p.Clone() as Nut).ToArray());
         }
 
         public Bag MakeBag(params Type[] nutTypes)
         {
             return MakeBag(nutTypes.Select(t => Activator.CreateInstance(t) as Nut).ToArray());
-        }
-
-        public Bag MakeBag(params string[] nutNames)
-        {
-            return MakeBag(nutNames.Select(Nut.GetType).ToArray());
         }
 
         public Bag Get(int id)

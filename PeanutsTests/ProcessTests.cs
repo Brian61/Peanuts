@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Peanuts;
+﻿using System.Linq;
 using NUnit.Framework;
+
 namespace Peanuts.Tests
 {
     [TestFixture()]
-    public class ProcessBaseTests
+    public class ProcessTests
     {
         [Test()]
         public void ChangeVendorTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var proc = new MockProcess(null, typeof(MockNutA));
             var vendorA = new Vendor();
             Assert.DoesNotThrow(() => proc.ChangeVendor(vendorA));
@@ -30,12 +26,12 @@ namespace Peanuts.Tests
         [Test()]
         public void OnChangeBagMixTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
             var proc = new MockProcess(vendor, typeof(MockNutA));
             var bag = vendor.MakeBag(typeof (MockNutA));
             Assert.IsTrue(proc.GetMatchingBagIds().Contains(bag.Id));
-            var nut = bag.Get(Nut.GetId(typeof (MockNutA)));
+            var nut = bag.Get<MockNutA>();
             vendor.Remove(bag, nut);
             Assert.IsFalse(proc.GetMatchingBagIds().Contains(bag.Id));
         }

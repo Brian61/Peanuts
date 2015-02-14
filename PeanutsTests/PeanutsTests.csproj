@@ -57,7 +57,7 @@
     <Compile Include="MockNutA.cs" />
     <Compile Include="MockProcess.cs" />
     <Compile Include="NutTests.cs" />
-    <Compile Include="ProcessBaseTests.cs" />
+    <Compile Include="ProcessTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RecipeBookTests.cs" />
     <Compile Include="VendorTests.cs" />

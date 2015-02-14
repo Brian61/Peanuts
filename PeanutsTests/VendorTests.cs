@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Peanuts;
 using NUnit.Framework;
+
 namespace Peanuts.Tests
 {
     [TestFixture()]
@@ -23,7 +19,7 @@ namespace Peanuts.Tests
         [Test()]
         public void MakeBagTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             Bag bag = null;
@@ -34,7 +30,7 @@ namespace Peanuts.Tests
         [Test()]
         public void MakeBagTest1()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var bagA = vendor.MakeBag(book.Get("RecipeA"));
@@ -46,7 +42,7 @@ namespace Peanuts.Tests
         [Test()]
         public void MakeBagTest2()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
             Bag bag = null;
             Assert.DoesNotThrow(() => bag = vendor.MakeBag(typeof(MockNutA), typeof(MockNutB)));
@@ -55,22 +51,11 @@ namespace Peanuts.Tests
         }
 
         [Test()]
-        public void MakeBagTest3()
-        {
-            Nut.Initialize();
-            var vendor = new Vendor();
-            Bag bag = null;
-            Assert.DoesNotThrow(() => bag = vendor.MakeBag("MockNutA", "MockNutB"));
-            Assert.NotNull(bag);
-            Assert.Catch(() => vendor.MakeBag("MockNutB", "NoneSuch"));
-        }
-
-        [Test()]
         public void TryGetTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
-            var bag = vendor.MakeBag("MockNutA");
+            var bag = vendor.MakeBag(typeof(MockNutA));
             var id = bag.Id;
             Bag bagB;
             Assert.IsTrue(vendor.TryGet(id, out bagB));
@@ -81,10 +66,10 @@ namespace Peanuts.Tests
         [Test()]
         public void GetTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
-            var bagA = vendor.MakeBag("MockNutA");
-            var bagB = vendor.MakeBag("MockNutA");
+            var bagA = vendor.MakeBag(typeof(MockNutA));
+            var bagB = vendor.MakeBag(typeof(MockNutA));
             Assert.AreNotSame(bagA, bagB);
             Assert.AreNotEqual(bagA.Id, bagB.Id);
             Assert.DoesNotThrow(() => vendor.Get(bagA.Id));
@@ -96,7 +81,7 @@ namespace Peanuts.Tests
         [Test()]
         public void AllBagsTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
             ISet<int> ids = new HashSet<int>();
             ISet<Bag> bags = new HashSet<Bag>();
@@ -120,59 +105,58 @@ namespace Peanuts.Tests
         [Test()]
         public void AddTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
-            var bag = vendor.MakeBag("MockNutA");
+            var bag = vendor.MakeBag(typeof(MockNutA));
             Nut nut = new MockNutB { SomeFloat = 2.0f };
             Assert.DoesNotThrow(() => vendor.Add(bag, nut));
-            Nut nut2 = null;
-            Assert.IsTrue(bag.TryGet(Nut.GetId(typeof(MockNutB)), out nut2));
+            MockNutB nut2;
+            Assert.IsTrue(bag.TryGet(out nut2));
             Assert.AreSame(nut, nut2);
         }
 
         [Test()]
         public void RemoveTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var vendor = new Vendor();
-            var bag = vendor.MakeBag("MockNutA", "MockNutB");
-            var id = Nut.GetId("MockNutB");
-            var nut = bag.Get(id);
+            var bag = vendor.MakeBag(typeof(MockNutA), typeof(MockNutB));
+            MockNutB nut = null;
+            Assert.DoesNotThrow(() => nut = bag.Get<MockNutB>());
             Assert.DoesNotThrow(() => vendor.Remove(bag, nut));
-            Assert.IsFalse(bag.TryGet(id, out nut));
+            Assert.IsFalse(bag.TryGet(out nut));
         }
 
         [Test()]
         public void MorphTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var bagA = vendor.MakeBag(book.Get("RecipeA"));
-            var idA = Nut.GetId("MockNutA");
+            //var idA = Peanuts.GetId("MockNutA");
             MockNutA mna = null;
-            Assert.DoesNotThrow(() => mna = bagA.Get(idA) as MockNutA);
+            Assert.DoesNotThrow(() => mna = bagA.Get<MockNutA>());
             mna.SomeText = "Quagmire";
             var bagB = vendor.MakeBag(book.Get("RecipeB"));
             Assert.DoesNotThrow(() => vendor.Morph(bagA, bagB));
-            var idB = Nut.GetId("MockNutB");
-            Nut nut;
-            Assert.IsTrue(bagA.TryGet(idB, out nut));
-            var mnb = nut as MockNutB;
+            //var idB = Peanuts.GetId("MockNutB");
+            MockNutB mnb;
+            Assert.IsTrue(bagA.TryGet(out mnb));
             Assert.NotNull(mnb);
             Assert.AreEqual(mnb.SomeFloat, 4.0f);
-            Assert.DoesNotThrow(() => mna = bagA.Get(idA) as MockNutA);
+            Assert.DoesNotThrow(() => mna = bagA.Get<MockNutA>());
             Assert.NotNull(mna);
             Assert.AreEqual(mna.SomeText, "Quagmire");
             bagB = vendor.MakeBag(typeof (MockNutA));
             vendor.Morph(bagA, bagB);
-            Assert.IsFalse(bagA.TryGet(idB, out nut));
+            Assert.IsFalse(bagA.TryGet(out mnb));
         }
 
         [Test()]
         public void DiscardTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var bagA = vendor.MakeBag(book.Get("RecipeA"));
@@ -187,7 +171,7 @@ namespace Peanuts.Tests
         [Test()]
         public void RegisterTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var bagA = vendor.MakeBag(book.Get("RecipeA"));
@@ -202,7 +186,7 @@ namespace Peanuts.Tests
         [Test()]
         public void UnregisterTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var proc = new MockProcess(vendor, typeof (MockNutA));
@@ -216,24 +200,26 @@ namespace Peanuts.Tests
         [Test]
         public void SerializeTest()
         {
-            Nut.Initialize();
+            Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             vendor.MakeBag(book.Get("RecipeA"));
             vendor.MakeBag(book.Get("RecipeB"));
-            var json = JsonConvert.SerializeObject(vendor, Formatting.Indented, JsonHelper.OutputSettings);
+            var json = JsonConvert.SerializeObject(vendor, Formatting.Indented, Peanuts.OutputSettings);
             //Assert.AreEqual(json, "{}");
-            vendor = JsonConvert.DeserializeObject<Vendor>(json, JsonHelper.InputSettings);
+            vendor = JsonConvert.DeserializeObject<Vendor>(json, Peanuts.InputSettings);
             Assert.AreEqual(2, vendor.AllBags().Count());
             var mix = new Mix(typeof (MockNutB));
             var countOfB = 0;
             foreach (var bag in vendor.AllBags())
             {
-                var nuta = bag.Get(Nut.GetId(typeof (MockNutA))) as MockNutA;
+                MockNutA nuta = null;
+                Assert.DoesNotThrow(() => nuta = bag.Get<MockNutA>());
                 Assert.NotNull(nuta);
                 Assert.AreEqual("Wee!!", nuta.SomeText);
                 if (!bag.Contains(mix)) continue;
-                var nutb = bag.Get(Nut.GetId(typeof (MockNutB))) as MockNutB;
+                MockNutB nutb = null;
+                Assert.DoesNotThrow(() => nutb = bag.Get<MockNutB>());
                 Assert.NotNull(nutb);
                 Assert.AreEqual(4.0f, nutb.SomeFloat);
                 countOfB++;

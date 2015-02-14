@@ -7,7 +7,7 @@ namespace Peanuts
     /// An abstract base class fulfilling the IProcess contract and providing tracking of
     /// current Bag instances of interest for the current Vendor instance.  
     /// </summary>
-    public abstract class ProcessBase : IProcess
+    public abstract class Process : IProcess
     {
         /// <summary>
         /// The current Vendor instance, can be null.
@@ -32,7 +32,7 @@ namespace Peanuts
         /// </summary>
         /// <param name="vendor">The Vendor instance of interest, may be null.</param>
         /// <param name="requiredNutTypes">A list of Type objects for the Nut subtypes of interest.</param>
-        protected ProcessBase(Vendor vendor, params Type[] requiredNutTypes)
+        protected Process(Vendor vendor, params Type[] requiredNutTypes)
         {
             _key = new Mix(requiredNutTypes);
             _bagIds = new HashSet<int>();
@@ -67,7 +67,7 @@ namespace Peanuts
         }
 
         /// <summary>
-        /// This method must be provided by ProcessBase subtypes.  It is intended to be
+        /// This method must be provided by Process subtypes.  It is intended to be
         /// called whenever the Process subtype instance is required to process the Bag
         /// instances of interest.
         /// </summary>

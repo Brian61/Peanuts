@@ -10,9 +10,7 @@ namespace Peanuts
     [JsonConverter(typeof(BagSerializer))]
     public sealed class Bag
     {
-        private static int _maxBagId;
-
-        private readonly Dictionary<int, Nut> _nutsById;
+        private readonly Dictionary<Type, Nut> _nutsByType;
         private readonly Mix _mask;
 
         /// <summary>
@@ -20,55 +18,59 @@ namespace Peanuts
         /// </summary>
         public int Id { get; private set; }
 
-        internal Dictionary<int, Nut> GetDictionary()
+        internal Dictionary<Type, Nut> GetDictionary()
         {
-            return _nutsById;
+            return _nutsByType;
         }
 
-        internal Bag(int id, Dictionary<int, Nut> contents)
+        internal Bag(int id, Dictionary<Type, Nut> contents)
         {
             Id = id;
-            if (id > _maxBagId)
-                _maxBagId = id;
-            _nutsById = contents;
+            Peanuts.BagIdGenerator.EnsureGreaterThan(id);
+            _nutsByType = contents;
             _mask = new Mix(contents.Keys);
         }
 
-        internal Bag(params Nut[] nuts)
+        internal Bag(IEnumerable<Nut> nuts)
         {
-            _nutsById = new Dictionary<int, Nut>();
+            _nutsByType = new Dictionary<Type, Nut>();
             foreach (var p in nuts)
             {
-                _nutsById[Nut.GetId(p.GetType())] = p;
+                _nutsByType[p.GetType()] = p;
             }
-            _mask = new Mix(_nutsById.Keys);
-            Id = ++_maxBagId;
+            _mask = new Mix(_nutsByType.Keys);
+            Id = Peanuts.BagIdGenerator.Next();
         }
  
-        internal Dictionary<int, Nut>.ValueCollection GetAll()
+        internal IEnumerable<Nut> GetAll()
         {
-            return _nutsById.Values;
+            return _nutsByType.Values;
         }
 
         /// <summary>
-        /// Gets a Nut for a given identifier.
+        /// Gets the Nut subtype T from the current Bag.
         /// </summary>
-        /// <param name="nutId">The integer id of the Nut type</param>
-        /// <returns>A Nut derived instance.</returns>
-        public Nut Get(int nutId)
+        /// <returns>A T (Nut subtype) instance.</returns>
+        public T Get<T>() where T : Nut
         {
-            return _nutsById[nutId];
+            return _nutsByType[typeof(T)] as T;
         }
 
         /// <summary>
         /// Checks for existance of an identified Nut type and if found gives the corresponding instance.
         /// </summary>
-        /// <param name="nutId">The integer id of the Nut type</param>
         /// <param name="nut">An out parameter to recieve the Nut derived instance if it exists.</param>
         /// <returns>True if an instance of the indicated Nut subtype exists and the out param is valid.</returns>
-        public bool TryGet(int nutId, out Nut nut)
+        public bool TryGet<T>(out T nut) where T : Nut
         {
-            return _nutsById.TryGetValue(nutId, out nut);
+            var type = typeof (T);
+            if (_nutsByType.ContainsKey(type))
+            {
+                nut = _nutsByType[type] as T;
+                return true;
+            }
+            nut = null;
+            return false;
         }
 
         /// <summary>
@@ -78,40 +80,43 @@ namespace Peanuts
         /// <returns>True if all of the subtypes indicated by key exist in this Bag.</returns>
         public bool Contains(Mix key)
         {
-            return key.IsSubsetOf(_mask);
+            return key.KeyFitsLock(_mask);
         }
 
         internal void Add(Nut nut)
         {
-            var pid = Nut.GetId(nut.GetType());
-            _nutsById[pid] = nut;
+            var nutType = nut.GetType();
+            var pid = Peanuts.GetId(nutType);
+            _nutsByType[nutType] = nut;
             _mask.Set(pid);
         }
 
         internal void Remove(Nut nut)
         {
-            var pid = Nut.GetId(nut.GetType());
-            _nutsById.Remove(pid);
+            var nutType = nut.GetType();
+            var pid = Peanuts.GetId(nutType);
+            _nutsByType.Remove(nutType);
             _mask.Clear(pid);
         }
 
         internal void Morph(Bag prototype)
         {
             var proto = prototype._mask;
-            for (var i = 0; i < Nut.NumberOfTypes(); i++)
+            for (var i = 0; i < Peanuts.NumberOfTypes(); i++)
             {
                 if (_mask.IsSet(i))
                 {
                     if (proto.IsSet(i))
                         continue;
-                    _nutsById.Remove(i);
+                    _nutsByType.Remove(Peanuts.GetType(i));
                     _mask.Clear(i);
                 }
                 else
                 {
                     if (!proto.IsSet(i))
                         continue;
-                    _nutsById[i] = prototype._nutsById[i].Clone();
+                    var nutType = Peanuts.GetType(i);
+                    _nutsByType[nutType] = prototype._nutsByType[nutType].Clone() as Nut;
                     _mask.Set(i);
                 }
             }
@@ -119,7 +124,7 @@ namespace Peanuts
 
         internal void ClearAll()
         {
-            _nutsById.Clear();
+            _nutsByType.Clear();
             _mask.ClearAll();
         }
     }
@@ -131,15 +136,15 @@ namespace Peanuts
     {
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var gob = (Bag) value;
+            var bag = (Bag) value;
             writer.WriteStartObject();
             writer.WritePropertyName("BagId");
-            writer.WriteValue(gob.Id);
-            foreach (var p in gob.GetDictionary().Values)
+            writer.WriteValue(bag.Id);
+            foreach (var kv in bag.GetDictionary())
             {
-                var ptype = p.GetType();
+                var ptype = kv.Key;
                 writer.WritePropertyName(ptype.Name);
-                serializer.Serialize(writer, p, ptype);
+                serializer.Serialize(writer, kv.Value, ptype);
             }
             writer.WriteEndObject();
         }
@@ -154,7 +159,7 @@ namespace Peanuts
             if (!reader.Read() || (reader.TokenType != JsonToken.Integer))
                 throw new JsonException("Missing expected BagId value");
             var bid = int.Parse(reader.Value.ToString()); 
-            var dict = new Dictionary<int, Nut>();
+            var dict = new Dictionary<Type, Nut>();
 
             while (reader.Read() && (reader.TokenType != JsonToken.EndObject))
             {
@@ -162,13 +167,12 @@ namespace Peanuts
                 if (reader.TokenType != JsonToken.PropertyName)
                     throw new JsonException("Missing expected property name");
                 var keyName = (string) reader.Value;
-                var ptype = Nut.GetType(keyName);
-                var pid = Nut.GetId(ptype);
+                var ptype = Peanuts.GetType(keyName);
                 reader.Read();
                 var value = serializer.Deserialize(reader, ptype) as Nut;
                 if (null == value)
                     throw new JsonException("Unable to deserialize nut");
-                dict[pid] = value;
+                dict[ptype] = value;
             }
             if (reader.TokenType != JsonToken.EndObject)
                 throw new JsonException("Unexpected end of stream in open object");
