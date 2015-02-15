@@ -28,7 +28,7 @@ namespace Peanuts
         private void NotifyProcesses(Bag bag)
         {
             foreach(var b in Processes)
-                b.OnChangeBagMix(bag.Id, bag.Mask);
+                b.OnChangeBagMix(bag);
         }
 
         /// <summary>
@@ -178,7 +178,8 @@ namespace Peanuts
         {
             Processes.Add(process);
             foreach (var bag in BagsById.Values)
-                process.OnChangeBagMix(bag.Id, bag.Mask);
+                process.OnChangeBagMix(bag);
+                //process.OnChangeBagMix(bag.Id, bag.Mask);
         }
 
         /// <summary>

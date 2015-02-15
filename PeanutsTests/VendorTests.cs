@@ -134,13 +134,11 @@ namespace Peanuts.Tests
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var bagA = vendor.MakeBag(book.Get("RecipeA"));
-            //var idA = Peanuts.GetId("MockNutA");
             MockNutA mna = null;
             Assert.DoesNotThrow(() => mna = bagA.Get<MockNutA>());
             mna.SomeText = "Quagmire";
             var bagB = vendor.MakeBag(book.Get("RecipeB"));
             Assert.DoesNotThrow(() => vendor.Morph(bagA, bagB));
-            //var idB = Peanuts.GetId("MockNutB");
             MockNutB mnb;
             Assert.IsTrue(bagA.TryGet(out mnb));
             Assert.NotNull(mnb);
@@ -178,8 +176,7 @@ namespace Peanuts.Tests
             MockProcess proc = null;
             Assert.DoesNotThrow(() => proc = new MockProcess(vendor, typeof (MockNutA)));
             Assert.AreEqual(1, proc.NotifiedBags.Count);
-            Bag bagB = null;
-            Assert.DoesNotThrow(() => bagB = vendor.Get(proc.NotifiedBags[0]));
+            var bagB = proc.NotifiedBags[0];
             Assert.AreSame(bagA, bagB);
         }
 
@@ -206,7 +203,6 @@ namespace Peanuts.Tests
             vendor.MakeBag(book.Get("RecipeA"));
             vendor.MakeBag(book.Get("RecipeB"));
             var json = JsonConvert.SerializeObject(vendor, Formatting.Indented, Peanuts.OutputSettings);
-            //Assert.AreEqual(json, "{}");
             vendor = JsonConvert.DeserializeObject<Vendor>(json, Peanuts.InputSettings);
             Assert.AreEqual(2, vendor.AllBags().Count());
             var mix = new Mix(typeof (MockNutB));

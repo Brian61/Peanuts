@@ -16,15 +16,7 @@
         /// <summary>
         /// Called by Vendor instances when a Bag has a change to its Nut subtypes.
         /// </summary>
-        /// <param name="id">The contextually unique integer identifier for the Bag instance.</param>
-        /// <param name="lockMix">A Mix instance describing the set of Nut subtypes in the Bag.</param>
-        void OnChangeBagMix(int id, Mix lockMix);
-
-        /// <summary>
-        /// Intended for use by users to run a process.
-        /// </summary>
-        /// <param name="gameTick">a user supplied long integer value.</param>
-        /// <param name="context">an optional user supplied object.</param>
-        void Update(long gameTick, object context = null);
+        /// <param name="bag">The Bag instance that changed.</param>
+        void OnChangeBagMix(Bag bag);
     }
 }

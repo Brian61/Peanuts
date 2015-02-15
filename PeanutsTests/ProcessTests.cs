@@ -30,10 +30,12 @@ namespace Peanuts.Tests
             var vendor = new Vendor();
             var proc = new MockProcess(vendor, typeof(MockNutA));
             var bag = vendor.MakeBag(typeof (MockNutA));
-            Assert.IsTrue(proc.GetMatchingBagIds().Contains(bag.Id));
+            Assert.IsTrue(proc.GetMatchingBags().Contains(bag));
+            //Assert.IsTrue(proc.GetMatchingBagIds().Contains(bag.Id));
             var nut = bag.Get<MockNutA>();
             vendor.Remove(bag, nut);
-            Assert.IsFalse(proc.GetMatchingBagIds().Contains(bag.Id));
+            Assert.IsFalse(proc.GetMatchingBags().Contains(bag));
+            //Assert.IsFalse(proc.GetMatchingBagIds().Contains(bag.Id));
         }
 
     }

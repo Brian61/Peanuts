@@ -15,17 +15,11 @@ namespace Peanuts
         protected Vendor BagVendor { get; private set; }
 
         private readonly Mix _key;
-        private readonly ISet<int> _bagIds;
 
         /// <summary>
-        /// This method gives access to the unique identifiers for all Bag instances in
-        /// the current Vendor instance which match the mix of interest.
+        /// The set of Bag instances meeting the 'key fits lock' criteria.
         /// </summary>
-        /// <returns>An IEnumerable<int> instance holding all matching Bag identifiers.</int></returns>
-        protected IEnumerable<int> MatchingBagIds()
-        {
-            return _bagIds;
-        }
+        protected ISet<Bag> MatchingBags { get; private set; } 
 
         /// <summary>
         /// The constructor for this base class.  
@@ -35,7 +29,8 @@ namespace Peanuts
         protected Process(Vendor vendor, params Type[] requiredNutTypes)
         {
             _key = new Mix(requiredNutTypes);
-            _bagIds = new HashSet<int>();
+            MatchingBags = new HashSet<Bag>();
+            //_bagIds = new HashSet<int>();
             ChangeVendor(vendor);
         }
 
@@ -48,7 +43,8 @@ namespace Peanuts
             if (null != BagVendor)
                 BagVendor.Unregister(this);
             BagVendor = vendor;
-            _bagIds.Clear();
+            MatchingBags.Clear();
+            //_bagIds.Clear();
             if (null != vendor)
                 vendor.Register(this);
         }
@@ -57,23 +53,13 @@ namespace Peanuts
         /// Called internally whenever a mix changes for a Bag instance of potential interest
         /// to this Process.  Bag instances may be added or removed from the tracked list.
         /// </summary>
-        /// <param name="id">The contextually unique integer identifier for the Bag instance.</param>
-        /// <param name="lockMix">The Mix instance describing the set of Nut subtypes in the Bag.</param>
-        public void OnChangeBagMix(int id, Mix lockMix)
+        /// <param name="bag">The Bag instance that has changed.</param>
+        public void OnChangeBagMix(Bag bag)
         {
-            if (_key.KeyFitsLock(lockMix))
-                _bagIds.Add(id);
+            if (_key.KeyFitsLock((bag.Mask)))
+                MatchingBags.Add(bag);
             else
-                _bagIds.Remove(id);
+                MatchingBags.Remove(bag);
         }
-
-        /// <summary>
-        /// This method must be provided by Process subtypes.  It is intended to be
-        /// called whenever the Process subtype instance is required to process the Bag
-        /// instances of interest.
-        /// </summary>
-        /// <param name="gameTick">A long integer indicating some passage of time in game.</param>
-        /// <param name="context">An optional user supplied/defined object.</param>
-        public abstract void Update(long gameTick, object context = null);
     }
 }
