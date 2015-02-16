@@ -8,8 +8,11 @@ namespace Peanuts
     /// </summary>
     public sealed class IdGenerator
     {
+    	/// <summary>
+    	/// The value of the last integer ID generated.
+    	/// </summary>
         [JsonProperty]
-        private int _lastId;
+        public int LastId { get; internal set; }
 
         /// <summary>
         /// Construct an instance of IdGenerator.  Intended for advanced usage.
@@ -17,18 +20,18 @@ namespace Peanuts
         /// <param name="lastId">Optional integer used to set the bottom of the id range.</param>
         public IdGenerator(int lastId = 0)
         {
-            _lastId = lastId;
+            LastId = lastId;
         }
 
         internal int Next()
         {
-            return ++_lastId;
+            return ++LastId;
         }
 
         internal void EnsureGreaterThan(int id)
         {
-            if (id > _lastId)
-                _lastId = id;
+            if (id > LastId)
+                LastId = id;
         }
     }
 }

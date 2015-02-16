@@ -23,11 +23,11 @@ namespace Peanuts
     public sealed class Vendor
     {
         internal readonly Dictionary<int, Bag> BagsById;
-        internal readonly List<IProcess> Processes;
+        internal readonly List<Harvester> Harvesters;
 
-        private void NotifyProcesses(Bag bag)
+        private void NotifyHarvesters(Bag bag)
         {
-            foreach(var b in Processes)
+            foreach(var b in Harvesters)
                 b.OnChangeBagMix(bag);
         }
 
@@ -36,19 +36,19 @@ namespace Peanuts
         /// </summary>
         /// <param name="bagCapacity">Optional integer specifying the initial 
         /// capacity of the Bag dictionary.</param>
-        /// <param name="processCapacity">Optional integer specifying the 
+        /// <param name="harvesterCapacity">Optional integer specifying the 
         /// initial capacity of the Process dictionary.</param>
-        public Vendor(int bagCapacity = 512, int processCapacity = 64)
+        public Vendor(int bagCapacity = 512, int harvesterCapacity = 64)
         {
             BagsById = new Dictionary<int, Bag>(bagCapacity);
-            Processes = new List<IProcess>(processCapacity);
+            Harvesters = new List<Harvester>(harvesterCapacity);
         }
 
         private Bag MakeBag(params Nut[] nuts)
         {
             var rval = new Bag(nuts);
             BagsById[rval.Id] = rval;
-            NotifyProcesses(rval);
+            NotifyHarvesters(rval);
             return rval;
         }
 
@@ -122,7 +122,7 @@ namespace Peanuts
         public Bag Add(Bag bag, Nut nut)
         {
             bag.Add(nut);
-            NotifyProcesses(bag);
+            NotifyHarvesters(bag);
             return bag;
         }
 
@@ -135,7 +135,7 @@ namespace Peanuts
         public Bag Remove(Bag bag, Nut nut)
         {
             bag.Remove(nut);
-            NotifyProcesses(bag);
+            NotifyHarvesters(bag);
             return bag;
         }
 
@@ -152,13 +152,13 @@ namespace Peanuts
         public Bag Morph(Bag target, Bag prototype)
         {
             target.Morph(prototype);
-            NotifyProcesses(target);
+            NotifyHarvesters(target);
             return target;
         }
 
         /// <summary>
         /// Discard a Bag instance from this Vendor instance.  Remove all of its
-        /// Nut subtypes, and notify all interested processes of the change.
+        /// Nut subtypes, and notify all interested harvesteres of the change.
         /// </summary>
         /// <param name="bag">The Bag instance to be discarded.</param>
         public void Discard(Bag bag)
@@ -166,30 +166,29 @@ namespace Peanuts
             var bid = bag.Id;
             BagsById.Remove(bid);
             bag.ClearAll();
-            NotifyProcesses(bag);
+            NotifyHarvesters(bag);
         }
 
         /// <summary>
-        /// Register a process with this Vendor instance so that it may recieve
+        /// Register a harvester with this Vendor instance so that it may recieve
         /// notifications of changes to Bag instances of interest.
         /// </summary>
-        /// <param name="process">The IProcess interface of the process to be registered.</param>
-        public void Register(IProcess process)
+        /// <param name="harvester">The Harvester instance to be registered.</param>
+        public void Register(Harvester harvester)
         {
-            Processes.Add(process);
+            Harvesters.Add(harvester);
             foreach (var bag in BagsById.Values)
-                process.OnChangeBagMix(bag);
-                //process.OnChangeBagMix(bag.Id, bag.Mask);
+                harvester.OnChangeBagMix(bag);
         }
 
         /// <summary>
-        /// Unregister a process from this Vendor instance so that it will no longer
+        /// Unregister a harvester from this Vendor instance so that it will no longer
         /// recieve notification of Bag instance changes.
         /// </summary>
-        /// <param name="process">The IProcess interface of the process to be unregistered.</param>
-        public void Unregister(IProcess process)
+        /// <param name="harvester">The IProcess interface of the harvester to be unregistered.</param>
+        public void Unregister(Harvester harvester)
         {
-            Processes.Remove(process);
+            Harvesters.Remove(harvester);
         }
     }
 
@@ -208,7 +207,7 @@ namespace Peanuts
             var vob = (Vendor)value;
             writer.WriteStartArray();
             writer.WriteValue(vob.BagsById.Count);
-            writer.WriteValue(vob.Processes.Count);
+            writer.WriteValue(vob.Harvesters.Count);
             foreach (var bag in vob.BagsById.Values)
             {
                 serializer.Serialize(writer, bag);
@@ -230,9 +229,9 @@ namespace Peanuts
                 throw new JsonException("numBags");
             int numBags = int.Parse(reader.Value.ToString());
             if (!reader.Read() || (reader.TokenType != JsonToken.Integer))
-                throw new JsonException("numProcesses");
-            int numProcesses = int.Parse(reader.Value.ToString());
-            var vob = new Vendor(numBags, numProcesses);
+                throw new JsonException("numHarvesters");
+            int numHarvesters = int.Parse(reader.Value.ToString());
+            var vob = new Vendor(numBags, numHarvesters);
             var bags = vob.BagsById;
             while (reader.Read() && (reader.TokenType != JsonToken.EndArray))
             {

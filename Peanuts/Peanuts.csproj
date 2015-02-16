@@ -65,10 +65,9 @@
   <ItemGroup>
     <Compile Include="Bag.cs" />
     <Compile Include="IdGenerator.cs" />
-    <Compile Include="IProcess.cs" />
     <Compile Include="Nut.cs" />
     <Compile Include="Peanuts.cs" />
-    <Compile Include="Process.cs" />
+    <Compile Include="Harvester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Mix.cs" />
     <Compile Include="Recipe.cs" />

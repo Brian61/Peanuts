@@ -4,29 +4,28 @@ using System.Collections.Generic;
 namespace Peanuts
 {
     /// <summary>
-    /// An abstract base class fulfilling the IProcess contract and providing tracking of
-    /// current Bag instances of interest for the current Vendor instance.  
+    /// A class that provides tracking of current Bag instances of interest for the current Vendor instance.  
     /// </summary>
-    public abstract class Process : IProcess
+    public class Harvester
     {
         /// <summary>
         /// The current Vendor instance, can be null.
         /// </summary>
-        protected Vendor BagVendor { get; private set; }
+        public Vendor BagVendor { get; private set; }
 
         private readonly Mix _key;
 
         /// <summary>
         /// The set of Bag instances meeting the 'key fits lock' criteria.
         /// </summary>
-        protected ISet<Bag> MatchingBags { get; private set; } 
+        public ISet<Bag> MatchingBags { get; private set; } 
 
         /// <summary>
-        /// The constructor for this base class.  
+        /// Construct a new Process.  
         /// </summary>
         /// <param name="vendor">The Vendor instance of interest, may be null.</param>
         /// <param name="requiredNutTypes">A list of Type objects for the Nut subtypes of interest.</param>
-        protected Process(Vendor vendor, params Type[] requiredNutTypes)
+        public Harvester(Vendor vendor, params Type[] requiredNutTypes)
         {
             _key = new Mix(requiredNutTypes);
             MatchingBags = new HashSet<Bag>();
@@ -44,17 +43,11 @@ namespace Peanuts
                 BagVendor.Unregister(this);
             BagVendor = vendor;
             MatchingBags.Clear();
-            //_bagIds.Clear();
             if (null != vendor)
                 vendor.Register(this);
         }
 
-        /// <summary>
-        /// Called internally whenever a mix changes for a Bag instance of potential interest
-        /// to this Process.  Bag instances may be added or removed from the tracked list.
-        /// </summary>
-        /// <param name="bag">The Bag instance that has changed.</param>
-        public void OnChangeBagMix(Bag bag)
+        internal void OnChangeBagMix(Bag bag)
         {
             if (_key.KeyFitsLock((bag.Mask)))
                 MatchingBags.Add(bag);

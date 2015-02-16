@@ -173,10 +173,10 @@ namespace Peanuts.Tests
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
             var bagA = vendor.MakeBag(book.Get("RecipeA"));
-            MockProcess proc = null;
-            Assert.DoesNotThrow(() => proc = new MockProcess(vendor, typeof (MockNutA)));
-            Assert.AreEqual(1, proc.NotifiedBags.Count);
-            var bagB = proc.NotifiedBags[0];
+            Harvester proc = null;
+            Assert.DoesNotThrow(() => proc = new Harvester(vendor, typeof (MockNutA)));
+            Assert.AreEqual(1, proc.MatchingBags.Count);
+            Bag bagB = proc.MatchingBags.ElementAt(0);
             Assert.AreSame(bagA, bagB);
         }
 
@@ -186,12 +186,12 @@ namespace Peanuts.Tests
             Peanuts.Initialize();
             var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
             var vendor = new Vendor();
-            var proc = new MockProcess(vendor, typeof (MockNutA));
+            var proc = new Harvester(vendor, typeof (MockNutA));
             vendor.MakeBag(book.Get("RecipeA"));
-            Assert.AreEqual(1, proc.NotifiedBags.Count);
+            Assert.AreEqual(1, proc.MatchingBags.Count);
             Assert.DoesNotThrow(() => vendor.Unregister(proc));
             vendor.MakeBag(book.Get("RecipeA"));
-            Assert.AreEqual(1, proc.NotifiedBags.Count);
+            Assert.AreEqual(1, proc.MatchingBags.Count);
         }
 
         [Test]
