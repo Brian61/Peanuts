@@ -93,7 +93,7 @@ namespace Peanuts.Tests
             }
             Assert.AreEqual(ids.Count, 10);
             Assert.AreEqual(bags.Count, 10);
-            foreach (var bag in vendor.AllBags())
+            foreach (var bag in vendor)
             {
                 ids.Remove(bag.Id);
                 bags.Remove(bag);
@@ -166,34 +166,6 @@ namespace Peanuts.Tests
             Assert.IsFalse(vendor.TryGet(bid, out bagA));
         }
 
-        [Test()]
-        public void RegisterTest()
-        {
-            Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
-            var vendor = new Vendor();
-            var bagA = vendor.MakeBag(book.Get("RecipeA"));
-            Harvester proc = null;
-            Assert.DoesNotThrow(() => proc = new Harvester(vendor, typeof (MockNutA)));
-            Assert.AreEqual(1, proc.MatchingBags.Count);
-            Bag bagB = proc.MatchingBags.ElementAt(0);
-            Assert.AreSame(bagA, bagB);
-        }
-
-        [Test()]
-        public void UnregisterTest()
-        {
-            Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
-            var vendor = new Vendor();
-            var proc = new Harvester(vendor, typeof (MockNutA));
-            vendor.MakeBag(book.Get("RecipeA"));
-            Assert.AreEqual(1, proc.MatchingBags.Count);
-            Assert.DoesNotThrow(() => vendor.Unregister(proc));
-            vendor.MakeBag(book.Get("RecipeA"));
-            Assert.AreEqual(1, proc.MatchingBags.Count);
-        }
-
         [Test]
         public void SerializeTest()
         {
@@ -204,10 +176,10 @@ namespace Peanuts.Tests
             vendor.MakeBag(book.Get("RecipeB"));
             var json = JsonConvert.SerializeObject(vendor, Formatting.Indented, Peanuts.OutputSettings);
             vendor = JsonConvert.DeserializeObject<Vendor>(json, Peanuts.InputSettings);
-            Assert.AreEqual(2, vendor.AllBags().Count());
+            Assert.AreEqual(2, vendor.Count());
             var mix = new Mix(typeof (MockNutB));
             var countOfB = 0;
-            foreach (var bag in vendor.AllBags())
+            foreach (var bag in vendor)
             {
                 MockNutA nuta = null;
                 Assert.DoesNotThrow(() => nuta = bag.Get<MockNutA>());

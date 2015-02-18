@@ -20,28 +20,60 @@ namespace Peanuts
     /// keep Process subtype instances aware of which Bag instances are of interest.
     /// </summary>
     [JsonConverter(typeof(VendorSerializer))]
-    public sealed class Vendor
+    public sealed class Vendor : IEnumerable<Bag>
     {
-        internal readonly Dictionary<int, Bag> BagsById;
-        internal readonly List<Harvester> Harvesters;
+        internal readonly SortedDictionary<int, Bag> BagsById;
+        internal readonly Dictionary<Mix, Harvester> Harvesters;
+
+        private void NotifyHarvester(Mix key, Harvester harvester, Bag bag)
+        {
+            if (key.KeyFitsLock(bag.Mask))
+                harvester.Add(bag);
+            else
+                harvester.Remove(bag);
+        }
 
         private void NotifyHarvesters(Bag bag)
         {
-            foreach(var b in Harvesters)
-                b.OnChangeBagMix(bag);
+            foreach (var kv in Harvesters)
+                NotifyHarvester(kv.Key, kv.Value, bag);
+        }
+
+        /// <summary>
+        /// Get a Harvester instance for the given key.
+        /// </summary>
+        /// <param name="key">A Mix instance describing a set of Nut subtypes.</param>
+        /// <returns>The (possibly new) Harvester instance.</returns>
+        public Harvester GetHarvester(Mix key)
+        {
+            if (!Harvesters.ContainsKey(key))
+            {
+                Harvester harvester = new Harvester();
+                Harvesters[key] = harvester;
+                foreach (var bag in BagsById.Values)
+                    NotifyHarvester(key, harvester, bag);
+            }
+            return Harvesters[key];
+        }
+
+        /// <summary>
+        /// Gets a Harvester instance for the set of given Nut subtypes.
+        /// </summary>
+        /// <param name="nutTypes">One or more Nut subtype types.</param>
+        /// <returns>The (possibly new) Harvester instance.</returns>
+        public Harvester GetHarvester(params Type[] nutTypes)
+        {
+            var key = new Mix(nutTypes);
+            return GetHarvester(key);
         }
 
         /// <summary>
         /// Creates a new Vendor instance.
         /// </summary>
-        /// <param name="bagCapacity">Optional integer specifying the initial 
-        /// capacity of the Bag dictionary.</param>
-        /// <param name="harvesterCapacity">Optional integer specifying the 
-        /// initial capacity of the Process dictionary.</param>
-        public Vendor(int bagCapacity = 512, int harvesterCapacity = 64)
+        public Vendor()
         {
-            BagsById = new Dictionary<int, Bag>(bagCapacity);
-            Harvesters = new List<Harvester>(harvesterCapacity);
+            BagsById = new SortedDictionary<int, Bag>();
+            Harvesters = new Dictionary<Mix, Harvester>();
         }
 
         private Bag MakeBag(params Nut[] nuts)
@@ -93,6 +125,17 @@ namespace Peanuts
         }
 
         /// <summary>
+        /// Overload of index operator for get only.
+        /// </summary>
+        /// <param name="id">Integer id of Bag instance desired.</param>
+        /// <returns>The Bag instance for id.</returns>
+        public Bag this[int id]
+        {
+            get { return Get(id); }
+            private set { throw new NotImplementedException(); }
+        }
+
+        /// <summary>
         /// Conditionally retrieve a Bag instance for an integer id that may,
         /// or may not, be contained in the Vendor instance.
         /// </summary>
@@ -102,15 +145,6 @@ namespace Peanuts
         public bool TryGet(int id, out Bag bag)
         {
             return BagsById.TryGetValue(id, out bag);
-        }
-
-        /// <summary>
-        /// Get an enumeration of all Bag instances in this Vendor instance.
-        /// </summary>
-        /// <returns>An IEnumerable<Bag> instance.</Bag></returns>
-        public IEnumerable<Bag> AllBags()
-        {
-            return BagsById.Values;
         }
 
         /// <summary>
@@ -170,25 +204,17 @@ namespace Peanuts
         }
 
         /// <summary>
-        /// Register a harvester with this Vendor instance so that it may recieve
-        /// notifications of changes to Bag instances of interest.
+        /// Implementation of IEnumerator&lt;Bag&gt; interface.
         /// </summary>
-        /// <param name="harvester">The Harvester instance to be registered.</param>
-        public void Register(Harvester harvester)
+        /// <returns>Enumerator</returns>
+        public IEnumerator<Bag> GetEnumerator()
         {
-            Harvesters.Add(harvester);
-            foreach (var bag in BagsById.Values)
-                harvester.OnChangeBagMix(bag);
+            return BagsById.Values.GetEnumerator();
         }
 
-        /// <summary>
-        /// Unregister a harvester from this Vendor instance so that it will no longer
-        /// recieve notification of Bag instance changes.
-        /// </summary>
-        /// <param name="harvester">The IProcess interface of the harvester to be unregistered.</param>
-        public void Unregister(Harvester harvester)
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            Harvesters.Remove(harvester);
+            return this.GetEnumerator();
         }
     }
 
@@ -206,8 +232,6 @@ namespace Peanuts
         {
             var vob = (Vendor)value;
             writer.WriteStartArray();
-            writer.WriteValue(vob.BagsById.Count);
-            writer.WriteValue(vob.Harvesters.Count);
             foreach (var bag in vob.BagsById.Values)
             {
                 serializer.Serialize(writer, bag);
@@ -223,15 +247,7 @@ namespace Peanuts
         {
             if (reader.TokenType != JsonToken.StartArray)
                 throw new JsonException("Expected ArrayStart got: " + reader.TokenType);
-            //if (!reader.Read() || (reader.TokenType != JsonToken.StartArray))
-            //    throw new JsonException("Missing expected start array token" + reader.TokenType);
-            if (!reader.Read() || (reader.TokenType != JsonToken.Integer))
-                throw new JsonException("numBags");
-            int numBags = int.Parse(reader.Value.ToString());
-            if (!reader.Read() || (reader.TokenType != JsonToken.Integer))
-                throw new JsonException("numHarvesters");
-            int numHarvesters = int.Parse(reader.Value.ToString());
-            var vob = new Vendor(numBags, numHarvesters);
+            var vob = new Vendor();
             var bags = vob.BagsById;
             while (reader.Read() && (reader.TokenType != JsonToken.EndArray))
             {

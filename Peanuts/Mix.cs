@@ -7,7 +7,7 @@ namespace Peanuts
     /// <summary>
     /// Instances of this class describe a specific mixture of unique Nut subtypes as a custom bitarray.
     /// </summary>
-    public sealed class Mix
+    public sealed class Mix : IComparable<Mix>
     {
         const int BitSize = (sizeof(uint) * 8) - 1;
         const int ByteSize = 5;  // log_2(BitSize + 1)
@@ -87,6 +87,26 @@ namespace Peanuts
                 throw new ArgumentException("Mix size mismatch");
             var lockBits = lockMix._bits;
             return !_bits.Where((bit, i) => (bit & lockBits[i]) != bit).Any();
+        }
+
+        /// <summary>
+        /// Implements IComparable interface for type Mix.
+        /// </summary>
+        /// <param name="other">Another Mix instance to be compared against.</param>
+        /// <returns>An integer representing sort order.</returns>
+        public int CompareTo(Mix other)
+        {
+            if (ReferenceEquals(this, other))
+                return 0;
+            if (_bits.Length != other._bits.Length)
+                return _bits.Length - other._bits.Length;
+            for (var i = 0; i < _bits.Length; i++ )
+            {
+                var r = _bits[i].CompareTo(other._bits[i]);
+                if (r != 0)
+                    return r;
+            }
+            return 0;
         }
     }
 }

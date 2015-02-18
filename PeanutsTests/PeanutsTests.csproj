@@ -56,7 +56,6 @@
     <Compile Include="MixTests.cs" />
     <Compile Include="MockNutA.cs" />
     <Compile Include="NutTests.cs" />
-    <Compile Include="HarvesterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RecipeBookTests.cs" />
     <Compile Include="VendorTests.cs" />
