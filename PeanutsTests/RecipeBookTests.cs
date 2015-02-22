@@ -8,13 +8,13 @@ namespace Peanuts.Tests
     {
         public const string JsonSample = @"{
     'RecipeA':  {
-            'MockNutA': {
+            'MockEntityA': {
                 'SomeText': 'Wee!!'
                         }
                 },
     'RecipeB':  {
             'Prototype': 'RecipeA',
-            'MockNutB': {
+            'MockEntityB': {
                 'SomeFloat': 4.0
                         }
                 }

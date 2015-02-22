@@ -3,7 +3,7 @@
 namespace Peanuts
 {
     /// <summary>
-    /// IdGenerator used to generate contextually unique integer identifiers for Bag instances.
+    /// IdGenerator used to generate contextually unique integer identifiers for Entity instances.
     /// Is compatible with Json.Net serialization.
     /// </summary>
     public sealed class IdGenerator

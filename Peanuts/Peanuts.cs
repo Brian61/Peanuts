@@ -14,9 +14,9 @@ namespace Peanuts
         /// <summary>
         /// This method *must* be called prior to any other use of the libary.
         /// </summary>
-        /// <param name="force">Advanced usage only.  Will possibly invalidate all existing Bag 
-        /// and Vendor instances.  Intended to be set true when this method is invoked after
-        /// plugins have loaded additional Nut subtypes.
+        /// <param name="force">Advanced usage only.  Will possibly invalidate all existing Entity 
+        /// and Group instances.  Intended to be set true when this method is invoked after
+        /// plugins have loaded additional Component subtypes.
         /// </param>
         public static void Initialize(bool force = false)
         {
@@ -26,9 +26,9 @@ namespace Peanuts
 
         /// <summary>
         /// IdGenerator serializeable with Json.Net
-        /// Used to generate contextually unique identifier integers for Bag instances.
+        /// Used to generate contextually unique identifier integers for Entity instances.
         /// </summary>
-        public static IdGenerator BagIdGenerator = new IdGenerator();
+        public static IdGenerator EntityIdGenerator = new IdGenerator();
 
         /// <summary>
         /// OutputSettings is an instance of JsonSerializerSettings for use with Json.Net.
@@ -79,7 +79,7 @@ namespace Peanuts
             _typeByName = new Dictionary<string, Type>(InitCollSize);
             _idByType = new Dictionary<Type, int>(InitCollSize);
             var cd = AppDomain.CurrentDomain;
-            foreach (var t in from asm in cd.GetAssemblies() from t in asm.GetTypes() where t.IsSealed && t.IsSubclassOf(typeof(Nut)) select t)
+            foreach (var t in from asm in cd.GetAssemblies() from t in asm.GetTypes() where t.IsSealed && t.IsSubclassOf(typeof(Component)) select t)
             {
                 var id = _types.Count;
                 _types.Add(t);

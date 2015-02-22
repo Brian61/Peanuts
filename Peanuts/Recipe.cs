@@ -44,22 +44,22 @@ namespace Peanuts
                 throw new JsonException("Unexpected end of input");
         }
 
-        private void FillIn(IDictionary<string, Nut> recipe)
+        private void FillIn(IDictionary<string, Component> recipe)
         {
             if (recipe == null) throw new ArgumentNullException("recipe");
             if (!string.IsNullOrEmpty(_prototype))
                 _book.Get(_prototype).FillIn(recipe);
             foreach (var entry in _ingredients)
             {
-                var nutType = Peanuts.GetType(entry.Key);
-                var ingredient = (Nut) entry.Value.ToObject(nutType);
+                var compType = Peanuts.GetType(entry.Key);
+                var ingredient = (Component) entry.Value.ToObject(compType);
                 recipe[entry.Key] = ingredient;
             }
         }
 
-        internal Nut[] ToNutArray()
+        internal Component[] ToNutArray()
         {
-            var recipe = new Dictionary<string, Nut>(_ingredients.Count);
+            var recipe = new Dictionary<string, Component>(_ingredients.Count);
             FillIn(recipe);
             return recipe.Values.ToArray();
         }

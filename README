@@ -1,26 +1,30 @@
 ﻿Peanuts
 ﻿
-A lightweight, data driven, Entity Component System C# library intended for roguelike games.
+A lightweight, data driven, Entity Component System C# library for roguelike games, intended to be simple and easy to use.
 
-Peanuts is intended to be easy to use.  First, naming; the names Entity, Component, and System are heavily used in numerous libraries and frameworks, including some that you may want to use in your project(s).  For that reason Peanuts uses a non-standard set of names to describe the various parts of the ECS.
+In Peanuts, a Component is a data object containing one or more data members.  A Peanut Component must be a sealed class supporting the ICloneable interface and should not implement any behaviors.  An abstract base class 'Component' is provided in the library which implements the ICloneable interface as a shallow copy.  Peanuts uses C# runtime services to register all component subtypes when the method  Peanuts.Initialize is called.  The Peanuts.Initialize method must be called after all assemblies are loaded but prior to creating any entities.
 
-The Entity concept in Peanuts is encapsulated in the Bag class.  Peanut's base component class is named Nut.  Systems in Peanuts are called Processes and supported via the IProcess interface and the ProcessBase abstract class.
+An Entity in Peanuts is a collection of Component subtypes, a contextually unique identifier, and a TagSet object describing the composition of the collection.  The sealed Entity class contains a number of methods for accessing components, adding and removing components, and morphing from one 'type' of Entity to another 'prototype' Entity.  Note that the constructors are not public, in Peanuts Entity objects are created (and discarded) through another class; Group.
 
-Two useful related concepts are encapsulated in the Mix and Vendor classes.  The Mix class is a custom bitset that describes a collection of Nut subtypes contained in a Bag or used by a Process.  The Vendor class is a set of Bag instances used by one or more Processes.
+A Group in Peanuts is an enumerable collection of related Entity instances owned by the Group instance.  While an application could use only one Group instance, Peanuts is designed for use with multiple groups of entities, such as might be obtained by separating entities according to the morphing concept.  For example, in a roguelike with destructible terrain, each map cell might be associated with a terrain entity.  Destroying a piece of terrain changes (morphs) it into another type of terrain.  A piece of terrain will not usually morph into a mobile, or an item, though they may spawn either as a side effect of the change.  Another grouping mechanism might deal with mapping rendering layers onto groups (once again terrain group in a different layer than mobile group).
 
-The data-driven aspect of Peanuts is encapsulated in the pair of classes: Recipe and RecipeBook.  Instances of RecipeBook are created by loading a Json text which describes a dictionary of Recipes by name, and each Recipe by a dictionary of Nut subtypes by the subtype name.  The hard work of Json -> C# object conversion is done using the Json.Net package.  Thus making your custom Nut subtype work seamlessly with the library is pretty simple.  A special pseudo-subtype exists for Recipes, this pseudo-subtype is given the name Prototype and its value is simply the name of another recipe.  All the Nut subtypes (and any Prototype) in that recipe are copied into the current recipe.
+The data-driven aspect of Peanuts is encapsulated in the pair of classes: Recipe and RecipeBook.  Instances of RecipeBook are created by loading a Json text which describes a dictionary of Recipes by name, and each Recipe by a dictionary of Component subtypes by the subtype name.  The hard work of Json -> C# object conversion is done using the Json.Net package.  Thus making your custom Component subtype work seamlessly with the library is pretty simple.  A special pseudo-subtype exists for Recipes, this pseudo-subtype is given the name Prototype and its value is simply the name of another recipe.  All the Component subtypes (and any Prototype) in that recipe are copied into the current recipe.
 
-The Peanut library supports saving and loading of Vendor instances (along with all contained Bags and Nuts) through serialization via Json.Net.
+The Peanut library supports saving and loading of Group instances (along with all contained Entities and their Components) through serialization via Json.Net.
 
-If you are unfamiliar with Entity Component Systems, you probably want to read up on them some before using Peanut.  However, as ECS implementations go, I hope Peanut is one of the easiest to use overall.
+If you are unfamiliar with Entity Component Systems, you probably want to read up on them some before using Peanuts.
 
-Some notes on shortcomings:  
+Useful links:
+http://t-machine.org/index.php/2009/10/26/entity-systems-are-the-future-of-mmos-part-5/
 
-Performance:
-At present Peanuts is single threaded only.  That may change in the future but requires quite a bit of work.  Performance should be adequate for roguelike and other turn based games, it may, or may not, be good enough for simple real time games.  The two biggest shortcomings of Peanuts in regards to performance are; first, the dual id to object lookup using hashtables commonly required by Processes; and second, the use of objects rather than contiguous arrays of structs for Nuts (Components).  Perhaps a third is that supplying object pools for Bags is not supported and for Nut subtypes is left to the user (and perhaps not possible without a rewrite of Peanuts).
+http://gameprogrammingpatterns.com/prototype.html
 
-Documentation:
-This document, together with the rather sparse comments on the public interface in the source files, is all that exists at present.
+http://gamedev.stackexchange.com/questions/31473/role-of-systems-in-entity-systems-architecture
 
-Samples:
-None at this time.  I plan to incorporate this library into my current roguelike game project which should provide some samples of usage.  Not there quite yet.
+http://cowboyprogramming.com/2007/01/05/evolve-your-heirachy/
+
+http://www.reddit.com/r/gamedev/comments/1tu4v5/is_there_any_reason_to_use_entity_system_approach/
+
+And the roguetemple forum thread for the project (Note first few posts are about the old version using non-standard names for components and entities.
+http://forums.roguetemple.com/index.php?topic=4472.0
+

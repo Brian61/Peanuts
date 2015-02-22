@@ -3,13 +3,13 @@
 namespace Peanuts.Tests
 {
     [TestFixture()]
-    public class MixTests
+    public class TagSetTests
     {
         [Test()]
-        public void MixTest()
+        public void TagSetTest()
         {
             Peanuts.Initialize();
-            var a = new Mix(typeof (MockNutA));
+            var a = new TagSet(typeof (MockEntityA));
             Assert.IsNotNull(a);
         }
 
@@ -17,8 +17,8 @@ namespace Peanuts.Tests
         public void KeyFitsLockTest()
         {
             Peanuts.Initialize();
-            var a = new Mix(typeof (MockNutA));
-            var b = new Mix(typeof(MockNutA), typeof(MockNutB));
+            var a = new TagSet(typeof (MockEntityA));
+            var b = new TagSet(typeof(MockEntityA), typeof(MockEntityB));
             Assert.IsTrue(a.KeyFitsLock(b));
             Assert.IsFalse(b.KeyFitsLock(a));
         }

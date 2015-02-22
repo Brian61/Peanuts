@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace Peanuts
 {
     /// <summary>
-    /// This class holds a list of recipes which may be used to create Bag instances.
+    /// This class holds a list of recipes which may be used to create Entity instances.
     /// Instances of this class may only be created through the static method Load.
     /// </summary>
     public sealed class RecipeBook
@@ -41,9 +41,9 @@ namespace Peanuts
         /// This static method is used to create a RecipeBook instance from a source of Json text.
         /// The Json text must take the form of an object containing one or more recipes.  Each
         /// recipe has its name as a key and the corresponding object value should contain a set
-        /// of key/value pairs where the key is either the name of a Nut subtype or the special
-        /// key 'Prototype'.  The value for Nut subtypes should be a Json object describing that
-        /// subtype.  The value for Prototype should be the name of another recipe whose Nut subtypes
+        /// of key/value pairs where the key is either the name of a Component subtype or the special
+        /// key 'Prototype'.  The value for Component subtypes should be a Json object describing that
+        /// subtype.  The value for Prototype should be the name of another recipe whose Component subtypes
         /// will be included in the current recipe (this is recursive and must not be circular).
         /// </summary>
         /// <param name="source">A TextReader subtype for the Json source text</param>
