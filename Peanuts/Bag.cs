@@ -83,6 +83,31 @@ namespace Peanuts
             return key.KeyFitsLock(Mask);
         }
 
+        /// <summary>
+        /// Test for existance of a given Nut subtype in this bag.
+        /// </summary>
+        /// <param name="nutType">The Nut subtype to check.</param>
+        /// <returns>True if contained.</returns>
+        public bool Contains(Type nutType)
+        {
+            return _nutsByType.ContainsKey(nutType);
+        }
+
+        /// <summary>
+        /// Test for existance of multiple Nut subtypes in this bag.
+        /// </summary>
+        /// <param name="nutTypes">The Nut subtypes to check.</param>
+        /// <returns>True if all indicated subtypes are contained.</returns>
+        public bool Contains(params Type[] nutTypes)
+        {
+            foreach(var nutType in nutTypes)
+            {
+                if (!_nutsByType.ContainsKey(nutType))
+                    return false;
+            }
+            return true;
+        }
+
         internal void Add(Nut nut)
         {
             var nutType = nut.GetType();

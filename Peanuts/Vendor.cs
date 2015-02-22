@@ -76,7 +76,12 @@ namespace Peanuts
             Harvesters = new Dictionary<Mix, Harvester>();
         }
 
-        private Bag MakeBag(params Nut[] nuts)
+        /// <summary>
+        /// Create a new instance of Bag containing the specified Nut subtypes.
+        /// </summary>
+        /// <param name="nuts">The Nut subtypes contained by the new bag.</param>
+        /// <returns>A new Bag instance.</returns>
+        public Bag MakeBag(params Nut[] nuts)
         {
             var rval = new Bag(nuts);
             BagsById[rval.Id] = rval;
