@@ -8,7 +8,7 @@ namespace Peanuts
     /// Instances of this class describe a specific mixture of unique Component 
     /// subtypes as a custom bitarray.
     /// </summary>
-    public sealed class TagSet : IComparable<TagSet>
+    public sealed class TagSet : IComparable<TagSet>, ICloneable
     {
         const int BitSize = (sizeof(uint) * 8) - 1;
         const int ByteSize = 5;  // log_2(BitSize + 1)
@@ -35,6 +35,11 @@ namespace Peanuts
         public TagSet(params Type[] compTypes)
             :this((IEnumerable<Type>) compTypes)
         {
+        }
+        
+        internal TagSet(TagSet other)
+        {
+        	_bits = (uint[]) other._bits.Clone();
         }
 
         internal bool IsSet(int index)
@@ -104,5 +109,14 @@ namespace Peanuts
             }
             return 0;
         }
+
+        /// <summary>
+        /// Implements Clone as deep copy.
+        /// </summary>
+        /// <returns>A deep copy of this object.</returns>
+		public object Clone()
+		{
+			return new TagSet(this);
+		}
     }
 }
