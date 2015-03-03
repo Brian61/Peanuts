@@ -43,6 +43,26 @@ namespace Peanuts
             if (reader.TokenType != JsonToken.EndObject)
                 throw new JsonException("Unexpected end of input");
         }
+        
+        /// <summary>
+        /// GetTagSet creates a new TagSet for the recipe.
+        /// </summary>
+        /// <returns>A new TagSet</returns>
+        public TagSet GetTagSet()
+        {
+        	var types = new List<Type>();
+        	FindTypes(types);
+        	return new TagSet(types);
+        }
+        
+        private void FindTypes(List<Type> types)
+        {
+        	if (!string.IsNullOrEmpty(_prototype))
+        		_book.Get(_prototype).FindTypes(types);
+        	foreach (var entry in _ingredients.Keys) {
+        		types.Add(Peanuts.GetType(entry));
+        	}
+        }
 
         private void FillIn(IDictionary<string, Component> recipe)
         {

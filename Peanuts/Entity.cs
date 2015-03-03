@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace Peanuts
 {
     /// <summary>
-    /// A Entity holds a collection of Nuts.
+    /// A Entity holds a collection of Components.
     /// </summary>
     [JsonConverter(typeof(EntitySerializer))]
     public sealed class Entity
@@ -30,6 +30,12 @@ namespace Peanuts
             _compsByType = contents;
             LockTag = new TagSet(contents.Keys);
         }
+        
+        /// <summary>
+        /// Empty entity intended for return value when no entity is available and
+        /// null return is undesireable.
+        /// </summary>
+        public static readonly Entity Empty = new Entity(0, new Dictionary<Type, Component>());
 
         internal Entity(IEnumerable<Component> components)
         {

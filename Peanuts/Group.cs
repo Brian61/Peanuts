@@ -22,13 +22,24 @@ namespace Peanuts
     public sealed class Group : IEnumerable<Entity>
     {
         internal readonly SortedDictionary<int, Entity> EntitiesById;
+        readonly Group _master;
 
         /// <summary>
         /// Creates a new Group instance.
         /// </summary>
-        public Group()
+        public Group(Group master = null, params TagSet[] masks)
         {
+        	_master = master;
             EntitiesById = new SortedDictionary<int, Entity>();
+            if (null == master) return;
+            var cond = masks.Length > 0? master.Where((e) => masks.Any(e.Contains)) : master;
+            foreach (var entity in cond) 
+            		AddEntity(entity);
+        }
+        
+        internal void AddEntity(Entity entity)
+        {
+        	EntitiesById[entity.Id] = entity;
         }
 
         /// <summary>
@@ -40,6 +51,8 @@ namespace Peanuts
         {
             var rval = new Entity(components);
             EntitiesById[rval.Id] = rval;
+            if (_master != null)
+            	_master.AddEntity(rval);
             return rval;
         }
 
@@ -71,6 +84,20 @@ namespace Peanuts
         public Entity NewEntity(params Type[] compTypes)
         {
             return NewEntity(compTypes.Select(t => Activator.CreateInstance(t) as Component).ToArray());
+        }
+        
+        /// <summary>
+        /// Creates a new instance of Entity containing default instances of the indicated Component subtypes.
+        /// </summary>
+        /// <param name="tagSet">A TagSet instance defining the set of subtypes.</param>
+        /// <returns></returns>
+        public Entity NewEntity(TagSet tagSet)
+        {
+        	return NewEntity(Enumerable.Range(0, Peanuts.NumberOfTypes())
+        	                 .Where(tagSet.IsSet)
+        	                 .Select(Peanuts.GetType)
+        	                 .ToArray());
+        	                 
         }
 
         /// <summary>
@@ -115,7 +142,10 @@ namespace Peanuts
         {
             var bid = entity.Id;
             EntitiesById.Remove(bid);
-            entity.ClearAll();
+            if (_master != null)
+            	_master.Discard(entity);
+            else
+            	entity.ClearAll();
         }
 
         /// <summary>
