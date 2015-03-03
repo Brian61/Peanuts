@@ -114,12 +114,7 @@ namespace Peanuts
             return true;
         }
         
-        /// <summary>
-        /// Adds a Component subtype to a Entity instance.
-        /// </summary>
-        /// <param name="component">The Component subtype instance to be added.</param>
-        /// <returns>The modified Entity instance.</returns>
-       public void Add(Component component)
+        internal void Add(Component component)
         {
             var compType = component.GetType();
             var cid = Peanuts.GetId(compType);
@@ -127,12 +122,7 @@ namespace Peanuts
             LockTag.Set(cid);
         }
 
-        /// <summary>
-        /// Removes a Component subtype from a Entity instance.
-        /// </summary>
-        /// <param name="component">The Component subtype instance to be removed.</param>
-        /// <returns>The modified Entity instance.</returns>
-        public void Remove(Component component)
+        internal void Remove(Component component)
         {
             var compType = component.GetType();
             var cid = Peanuts.GetId(compType);
@@ -140,16 +130,7 @@ namespace Peanuts
             LockTag.Clear(cid);
         }
 
-        /// <summary>
-        /// Morph (change) the target Entity instance to have the same Component subtypes as the 
-        /// prototype Entity instance.  Component subtype instances contained in both will not be
-        /// modified.  Component subtypes not included in the prototype will be removed from
-        /// the target.  Component subtypes present in the prototype but not in the target
-        /// will be copied from the prototype to the target.
-        /// </summary>
-        /// <param name="prototype">A Entity instance serving as a template.</param>
-        /// <returns>The modified Entity (target) instance.</returns>
-        public void Morph(Entity prototype)
+        internal void Morph(Entity prototype)
         {
             var proto = prototype.LockTag;
             for (var i = 0; i < Peanuts.NumberOfTypes(); i++)

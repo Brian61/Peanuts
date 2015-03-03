@@ -13,28 +13,71 @@ namespace Peanuts
     class NamespaceDoc
     {
     }
+    
+    /// <summary>
+    /// EntityChangeEvent type enumeration for listeners. 
+    /// </summary>
+	public enum EntityChangeEvent {
+    	/// <summary>
+    	/// Indicates an entity has been added to the group.
+    	/// </summary>
+		Added = 1,
+		
+		/// <summary>
+		/// Indicates an entity has been removed from the group.
+		/// </summary>
+		Removed = 2,
+		
+		/// <summary>
+		/// Indicates the entity's set of Component types has changed.
+		/// </summary>
+		Reconfigured = 3
+	}
 
     /// <summary>
-    /// Instances of the Group class form the interface for access to a collection
-    /// of related Entity instances.
+    /// Instances of the Group class form the interface for access to a 
+    /// collection of Entity instances.
     /// </summary>
     [JsonConverter(typeof(GroupSerializer))]
     public sealed class Group : IEnumerable<Entity>
     {
         internal readonly SortedDictionary<int, Entity> EntitiesById;
-        readonly Group _master;
+        private readonly ISet<Action<Entity, EntityChangeEvent>> _listeners;
 
         /// <summary>
         /// Creates a new Group instance.
         /// </summary>
-        public Group(Group master = null, params TagSet[] masks)
+        public Group()
         {
-        	_master = master;
             EntitiesById = new SortedDictionary<int, Entity>();
-            if (null == master) return;
-            var cond = masks.Length > 0? master.Where((e) => masks.Any(e.Contains)) : master;
-            foreach (var entity in cond) 
-            		AddEntity(entity);
+            _listeners = new HashSet<Action<Entity, EntityChangeEvent>>();
+        }
+        
+        /// <summary>
+        /// Add a listener to the list of listeners to be notified of
+        /// configuration changes to entities in the group.  Listeners
+        /// are also notified of entity addition and removal.
+        /// </summary>
+        /// <param name="listener">The callback Func for the listener.</param>
+        public void AddListener(Action<Entity, EntityChangeEvent> listener)
+        {
+        	_listeners.Add(listener);
+        }
+        
+        /// <summary>
+        /// Removes a listener from the list of listeners to be notified of
+        /// configuration changes to entities in the group.
+        /// </summary>
+        /// <param name="listener">The callback Func for the listener.</param>
+        public void RemoveListener(Action<Entity, EntityChangeEvent> listener)
+        {
+        	_listeners.Remove(listener);
+        }
+        
+        private void NotifyListeners(Entity entity, EntityChangeEvent change) 
+        {
+        	foreach(var listener in _listeners)
+        		listener(entity, change);
         }
         
         internal void AddEntity(Entity entity)
@@ -51,8 +94,7 @@ namespace Peanuts
         {
             var rval = new Entity(components);
             EntitiesById[rval.Id] = rval;
-            if (_master != null)
-            	_master.AddEntity(rval);
+            NotifyListeners(rval, EntityChangeEvent.Added);
             return rval;
         }
 
@@ -63,7 +105,7 @@ namespace Peanuts
         /// <returns>A new Entity instance.</returns>
         public Entity NewEntity(Recipe recipe)
         {
-            return NewEntity(recipe.ToNutArray());
+            return NewEntity(recipe.ToComponentArray());
         }
 
         /// <summary>
@@ -142,12 +184,47 @@ namespace Peanuts
         {
             var bid = entity.Id;
             EntitiesById.Remove(bid);
-            if (_master != null)
-            	_master.Discard(entity);
-            else
-            	entity.ClearAll();
+            NotifyListeners(entity, EntityChangeEvent.Removed);
+			entity.ClearAll();
         }
-
+        
+        /// <summary>
+        /// Adds a Component subtype to a Entity instance.
+        /// </summary>
+        /// <param name="entity">The entity to be modified.</param>
+        /// <param name="component">The Component subtype instance to be added.</param>
+       public void AddComponent(Entity entity, Component component)
+        {
+        	entity.Add(component);
+        	NotifyListeners(entity, EntityChangeEvent.Reconfigured);
+        }
+        
+        /// <summary>
+        /// Removes a Component subtype from a Entity instance.
+        /// </summary>
+        /// <param name="entity">The entity to be modified.</param>
+        /// <param name="component">The Component subtype instance to be removed.</param>
+        public void RemoveComponent(Entity entity, Component component)
+        {
+        	entity.Remove(component);
+        	NotifyListeners(entity, EntityChangeEvent.Reconfigured);
+        }
+        
+        /// <summary>
+        /// Morph (change) the target Entity instance to have the same Component subtypes as the 
+        /// prototype Entity instance.  Component subtype instances contained in both will not be
+        /// modified.  Component subtypes not included in the prototype will be removed from
+        /// the target.  Component subtypes present in the prototype but not in the target
+        /// will be copied from the prototype to the target.
+        /// </summary>
+        /// <param name="entity">The entity to be modified.</param>
+        /// <param name="prototype">A Entity instance serving as a template.</param>
+        public void MorphEntity(Entity entity, Entity prototype)
+        {
+        	entity.Morph(prototype);
+        	NotifyListeners(entity, EntityChangeEvent.Reconfigured);
+        }
+        
         /// <summary>
         /// Implementation of IEnumerator&lt;Entity&gt; interface.
         /// </summary>

@@ -77,7 +77,7 @@ namespace Peanuts
             }
         }
 
-        internal Component[] ToNutArray()
+        internal Component[] ToComponentArray()
         {
             var recipe = new Dictionary<string, Component>(_ingredients.Count);
             FillIn(recipe);

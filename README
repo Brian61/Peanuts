@@ -28,3 +28,6 @@ http://www.reddit.com/r/gamedev/comments/1tu4v5/is_there_any_reason_to_use_entit
 And the roguetemple forum thread for the project (Note first few posts are about the old version using non-standard names for components and entities.
 http://forums.roguetemple.com/index.php?topic=4472.0
 
+Update 3/3/2015: Groups have been more or less returned to the earlier implementation.  Any changes to the makeup of a managed entity (add/remove component) must once again go through the Group interface.  A weaker form of the old notification interface has been reimplemented, it simply allows for the addition and removal of listener delegates (Action&lt;Entity, EntityChangeEvent&gt;) which are called whenever changes are made to the group and whenever an entity's set of components has changed.  It may evolve into a form which replaces the EntityChangeEvent enum value with an actual TagSet for the entity in the change if performance requirements so dictate.
+
+If anyone has comments or requests, please contact me through a post on the roguetemple forums in the thread listed above.

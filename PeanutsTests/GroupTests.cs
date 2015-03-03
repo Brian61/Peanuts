@@ -109,7 +109,7 @@ namespace Peanuts.Tests
             var group = new Group();
             var entity = group.NewEntity(typeof(MockEntityA));
             Component component = new MockEntityB { SomeFloat = 2.0f };
-            Assert.DoesNotThrow(() => entity.Add(component));
+            Assert.DoesNotThrow(() => group.AddComponent(entity, component));
             MockEntityB nut2;
             Assert.IsTrue(entity.TryGet(out nut2));
             Assert.AreSame(component, nut2);
@@ -123,7 +123,7 @@ namespace Peanuts.Tests
             var entity = group.NewEntity(typeof(MockEntityA), typeof(MockEntityB));
             MockEntityB component = null;
             Assert.DoesNotThrow(() => component = entity.Get<MockEntityB>());
-            Assert.DoesNotThrow(() => entity.Remove(component));
+            Assert.DoesNotThrow(() => group.RemoveComponent(entity, component));
             Assert.IsFalse(entity.TryGet(out component));
         }
 
@@ -138,7 +138,7 @@ namespace Peanuts.Tests
             Assert.DoesNotThrow(() => mna = entA.Get<MockEntityA>());
             mna.SomeText = "Quagmire";
             var entB = group.NewEntity(book.Get("RecipeB"));
-            Assert.DoesNotThrow(() => entA.Morph(entB));
+            Assert.DoesNotThrow(() => group.MorphEntity(entA, entB));
             MockEntityB mnb;
             Assert.IsTrue(entA.TryGet(out mnb));
             Assert.NotNull(mnb);
@@ -147,7 +147,7 @@ namespace Peanuts.Tests
             Assert.NotNull(mna);
             Assert.AreEqual(mna.SomeText, "Quagmire");
             entB = group.NewEntity(typeof (MockEntityA));
-            entA.Morph(entB);
+            group.MorphEntity(entA, entB);
             Assert.IsFalse(entA.TryGet(out mnb));
         }
 
