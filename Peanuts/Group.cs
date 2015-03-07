@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
 namespace Peanuts
 {
@@ -13,17 +13,33 @@ namespace Peanuts
 	class NamespaceDoc
 	{
 	}
-    
+	
 	/// <summary>
 	/// Instances of the Group class form the interface for access to a 
 	/// collection of Entity instances.
 	/// </summary>
-	[JsonConverter(typeof(GroupSerializer))]
+	[Serializable]
 	public sealed class Group : IEnumerable<Entity>
 	{
+		
 		internal readonly SortedDictionary<int, Entity> EntitiesById;
-		private readonly ISet<Action<Entity, TagSet, TagSet>> _listeners;
+		
+		[NonSerialized]
+		private ISet<Action<Entity, TagSet, TagSet>> _listeners;
+		
+		[OnDeserializing]
+		void BeforeDeserialize(StreamingContext c)
+		{
+			if (null == _listeners)
+				_listeners = new HashSet<Action<Entity,TagSet,TagSet>>();
+		}
 
+		[OnDeserialized]
+		void AfterDeserialize(StreamingContext c)
+		{
+			Peanuts.EntityIdGenerator.EnsureGreaterThan(EntitiesById.Keys.Max());
+		}
+		
 		/// <summary>
 		/// Creates a new Group instance.
 		/// </summary>
@@ -32,7 +48,7 @@ namespace Peanuts
 			EntitiesById = new SortedDictionary<int, Entity>();
 			_listeners = new HashSet<Action<Entity, TagSet, TagSet>>();
 		}
-        
+		
 		/// <summary>
 		/// Add a listener to the list of listeners to be notified of
 		/// configuration changes to entities in the group.  Listeners
@@ -43,7 +59,7 @@ namespace Peanuts
 		{
 			_listeners.Add(listener);
 		}
-        
+		
 		/// <summary>
 		/// Removes a listener from the list of listeners to be notified of
 		/// configuration changes to entities in the group.
@@ -53,13 +69,13 @@ namespace Peanuts
 		{
 			_listeners.Remove(listener);
 		}
-        
+		
 		private void NotifyListeners(Entity entity, TagSet current, TagSet previous)
 		{
 			foreach (var listener in _listeners)
 				listener(entity, current, previous);
 		}
-        
+		
 		/// <summary>
 		/// Create a new instance of Entity containing the specified Component subtypes.
 		/// </summary>
@@ -73,14 +89,20 @@ namespace Peanuts
 			return entity;
 		}
 
+		private Entity NewEntityClone(IEnumerable<Component> source)
+		{
+			return NewEntity(source.Select(c => c.Clone() as Component).ToArray());
+		}
+
 		/// <summary>
 		/// Create a new instance of a Entity containing Component subtypes as specified in the given recipe.
 		/// </summary>
-		/// <param name="recipe">A Recipe instance describing the Component subtypes.</param>
+		/// <param name="book">The RecipeBook containing the recipe.</param>
+		/// <param name="recipeName">The name of the recipe.</param>
 		/// <returns>A new Entity instance.</returns>
-		public Entity NewEntity(Recipe recipe)
+		public Entity NewEntity(RecipeBook book, string recipeName)
 		{
-			return NewEntity(recipe.ToComponentArray());
+			return NewEntityClone(book.GetComponentsFor(recipeName));
 		}
 
 		/// <summary>
@@ -90,7 +112,7 @@ namespace Peanuts
 		/// <returns>A new Entity instance.</returns>
 		public Entity NewEntity(Entity prototype)
 		{
-			return NewEntity(prototype.GetAll().Select(p => p.Clone() as Component).ToArray());
+			return NewEntityClone(prototype.GetAll());
 		}
 
 		/// <summary>
@@ -102,7 +124,7 @@ namespace Peanuts
 		{
 			return NewEntity(compTypes.Select(t => Activator.CreateInstance(t) as Component).ToArray());
 		}
-        
+		
 		/// <summary>
 		/// Creates a new instance of Entity containing default instances of the indicated Component subtypes.
 		/// </summary>
@@ -111,10 +133,10 @@ namespace Peanuts
 		public Entity NewEntity(TagSet tagSet)
 		{
 			return NewEntity(Enumerable.Range(0, Peanuts.NumberOfTypes())
-        	                 .Where(tagSet.IsSet)
-        	                 .Select(Peanuts.GetType)
-        	                 .ToArray());
-        	                 
+							 .Where(tagSet.IsSet)
+							 .Select(Peanuts.GetType)
+							 .ToArray());
+							 
 		}
 
 		/// <summary>
@@ -161,7 +183,7 @@ namespace Peanuts
 			NotifyListeners(entity, null, entity.LockTag);
 			entity.ClearAll();        
 		}
-        
+		
 		/// <summary>
 		/// Adds a Component subtype to a Entity instance.
 		/// </summary>
@@ -173,7 +195,7 @@ namespace Peanuts
 			entity.Add(component);
 			NotifyListeners(entity, entity.LockTag, previous);
 		}
-        
+		
 		/// <summary>
 		/// Removes a Component subtype from a Entity instance.
 		/// </summary>
@@ -185,7 +207,7 @@ namespace Peanuts
 			entity.Remove(component);
 			NotifyListeners(entity, entity.LockTag, previous);
 		}
-        
+		
 		/// <summary>
 		/// Morph (change) the target Entity instance to have the same Component subtypes as the 
 		/// prototype Entity instance.  Component subtype instances contained in both will not be
@@ -201,7 +223,7 @@ namespace Peanuts
 			entity.Morph(prototype);
 			NotifyListeners(entity, entity.LockTag, previous);
 		}
-        
+		
 		/// <summary>
 		/// Implementation of IEnumerator&lt;Entity&gt; interface.
 		/// </summary>
@@ -214,57 +236,6 @@ namespace Peanuts
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 		{
 			return this.GetEnumerator();
-		}
-	}
-
-	/// <summary>
-	/// For internal use only.
-	/// </summary>
-	/// <exclude/>
-	public class GroupSerializer : JsonConverter
-	{
-		/// <summary>
-		/// For internal use only.
-		/// </summary>
-		/// <exclude/>
-		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-		{
-			var vob = (Group)value;
-			writer.WriteStartArray();
-			foreach (var entity in vob.EntitiesById.Values) {
-				serializer.Serialize(writer, entity);
-			}
-			writer.WriteEndArray();
-		}
-
-		/// <summary>
-		/// For internal use only.
-		/// </summary>
-		/// <exclude/>
-		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-		{
-			if (reader.TokenType != JsonToken.StartArray)
-				throw new JsonException("Expected ArrayStart got: " + reader.TokenType);
-			var vob = new Group();
-			var bags = vob.EntitiesById;
-			while (reader.Read() && (reader.TokenType != JsonToken.EndArray)) {
-				var entity = serializer.Deserialize<Entity>(reader);
-				if (null == entity)
-					throw new JsonException("Unable to deserialize entity");
-				bags[entity.Id] = entity;
-			}
-			if (reader.TokenType != JsonToken.EndArray)
-				throw new JsonException("Unexpected end of stream in open array");
-			return vob;
-		}
-
-		/// <summary>
-		/// For internal use only.
-		/// </summary>
-		/// <exclude/>
-		public override bool CanConvert(Type objectType)
-		{
-			return typeof(Group).IsAssignableFrom(objectType);
 		}
 	}
 }

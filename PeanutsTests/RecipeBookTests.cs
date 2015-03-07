@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using NUnit.Framework;
 
 namespace Peanuts.Tests
@@ -19,31 +20,28 @@ namespace Peanuts.Tests
                         }
                 }
 }";
+        public static Stream GetSampleStream()
+        {
+            var js = JsonSample.Replace('\'', '"');
+            return new MemoryStream(Encoding.UTF8.GetBytes(js));
+        }
 
         [Test()]
         public void LoadTest()
         {
-            Assert.DoesNotThrow(() => RecipeBook.Load(new StringReader(JsonSample)));
+            Assert.DoesNotThrow(() => RecipeBook.Load(GetSampleStream()));
         }
 
         [Test()]
-        public void TryGetTest()
+        public void ContainsTest()
         {
-            var book = RecipeBook.Load(new StringReader(JsonSample));
-            Recipe recipe;
-            Assert.IsTrue(book.TryGet("RecipeA", out recipe));
-            Assert.NotNull(recipe);
-            Assert.AreEqual(recipe.Name, "RecipeA");
-            Assert.IsFalse(book.TryGet("NoneSuch", out recipe));
-        }
-
-        [Test()]
-        public void GetTest()
-        {
-            var book = RecipeBook.Load(new StringReader(JsonSample));
-            Assert.Catch(() => book.Get("NoneSuch"));
-            Assert.DoesNotThrow(() => book.Get("RecipeB"));
-            Assert.IsNotNull(book.Get("RecipeB"));
+            var book = RecipeBook.Load(GetSampleStream());
+            Assert.IsTrue(book.Contains("RecipeA"));
+            var tsa = book.GetTagSetFor("RecipeA");
+            var tsb = new TagSet(typeof(MockEntityA));
+            Assert.IsTrue(0 == tsa.CompareTo(tsb));
+            Assert.IsTrue(book.Contains("RecipeB"));
+            Assert.IsFalse(book.Contains("mananana"));
         }
     }
 }

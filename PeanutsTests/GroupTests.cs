@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 using NUnit.Framework;
+using System.Runtime.Serialization;
 
 namespace Peanuts.Tests
 {
@@ -20,10 +20,10 @@ namespace Peanuts.Tests
         public void MakeBagTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
+            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
             var group = new Group();
             Entity entity = null;
-            Assert.DoesNotThrow(() => entity = group.NewEntity(book.Get("RecipeA")));
+            Assert.DoesNotThrow(() => entity = group.NewEntity(book, "RecipeA"));
             Assert.NotNull(entity);
         }
 
@@ -31,9 +31,9 @@ namespace Peanuts.Tests
         public void MakeBagTest1()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
+            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
             var group = new Group();
-            var entA = group.NewEntity(book.Get("RecipeA"));
+            var entA = group.NewEntity(book, "RecipeA");
             Entity entB = null;
             Assert.DoesNotThrow(() => entB = group.NewEntity(entA));
             Assert.NotNull(entB);
@@ -131,13 +131,13 @@ namespace Peanuts.Tests
         public void MorphTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
+            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
             var group = new Group();
-            var entA = group.NewEntity(book.Get("RecipeA"));
+            var entA = group.NewEntity(book, "RecipeA");
             MockEntityA mna = null;
             Assert.DoesNotThrow(() => mna = entA.Get<MockEntityA>());
             mna.SomeText = "Quagmire";
-            var entB = group.NewEntity(book.Get("RecipeB"));
+            var entB = group.NewEntity(book, "RecipeB");
             Assert.DoesNotThrow(() => group.MorphEntity(entA, entB));
             MockEntityB mnb;
             Assert.IsTrue(entA.TryGet(out mnb));
@@ -155,9 +155,9 @@ namespace Peanuts.Tests
         public void DiscardTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
+            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
             var group = new Group();
-            var entA = group.NewEntity(book.Get("RecipeA"));
+            var entA = group.NewEntity(book,"RecipeA");
             var bid = entA.Id;
             var mix = new TagSet(typeof (MockEntityA));
             Assert.IsTrue(entA.Contains(mix));
@@ -170,14 +170,18 @@ namespace Peanuts.Tests
         public void SerializeTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(new StringReader(RecipeBookTests.JsonSample));
+            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
             var group = new Group();
-            group.NewEntity(book.Get("RecipeA"));
-            group.NewEntity(book.Get("RecipeB"));
-            var json = JsonConvert.SerializeObject(group, Formatting.Indented, Peanuts.OutputSettings);
-            group = JsonConvert.DeserializeObject<Group>(json, Peanuts.InputSettings);
+            group.NewEntity(book, "RecipeA");
+            group.NewEntity(book, "RecipeB");
+            var ser = new DataContractSerializer(typeof(Group), Peanuts.AllTypes());
+            var ms = new MemoryStream();
+            ser.WriteObject(ms, group);
+            ms.Seek(0, SeekOrigin.Begin);
+            group = ser.ReadObject(ms) as Group;
+            Assert.NotNull(group);
             Assert.AreEqual(2, group.Count());
-            var mix = new TagSet(typeof (MockEntityB));
+            var mix = new TagSet(typeof(MockEntityB));
             var countOfB = 0;
             foreach (var entity in group)
             {

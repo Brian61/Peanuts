@@ -1,6 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
+using System.Json;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization.Json;
+using System.Text;
 
 namespace Peanuts
 {
@@ -10,61 +15,162 @@ namespace Peanuts
     /// </summary>
     public sealed class RecipeBook
     {
-        private readonly Dictionary<string, Recipe> _recipes = new Dictionary<string, Recipe>();
+        /// <summary>
+        /// Keyword used in recipe book json source texts to indicate 'inheritance' 
+        /// of a prototype recipe.
+        /// </summary>
+        public const string PrototypeKeyword = "Prototype";
+
+        /// <summary>
+        /// Create a new RecipeBook from a stream.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <returns>A new RecipeBook instance.</returns>
+        public static RecipeBook Load(Stream stream)
+        {
+            var book = new RecipeBook();
+            InitializeCaches();
+            ExtractBlueprints(stream);
+            book.ProcessBlueprints();
+            DiscardCaches();
+            return book;
+        }
+
+        /// <summary>
+        /// Test for existance of a recipe in this book.
+        /// </summary>
+        /// <param name="recipeName">The name of the recipe.</param>
+        /// <returns>True if the recipe exists in this book.</returns>
+        public bool Contains(string recipeName)
+        {
+            return _recipes.ContainsKey(recipeName);
+        }
+
+        /// <summary>
+        /// Create a TagSet for the indicated recipe.
+        /// </summary>
+        /// <param name="recipeName">The name of the recipe.</param>
+        /// <returns>A new TagSet.</returns>
+        public TagSet GetTagSetFor(string recipeName)
+        {
+            return new TagSet(_recipes[recipeName].Keys);
+        }
+
+        internal IEnumerable<Component> GetComponentsFor(string recipeName)
+        {
+            return _recipes[recipeName].Values;
+        }
 
         private RecipeBook()
         {
+            _recipes = new Dictionary<string, IDictionary<Type, Component>>();
         }
 
-        /// <summary>
-        /// Tests for and conditionally retrieves a Recipe instance for the given name.
-        /// </summary>
-        /// <param name="name">A string giving the name of the recipe</param>
-        /// <param name="recipe">an out param of type Recipe to recieve a matching recipe.</param>
-        /// <returns>True if a recipe matching name was found and a recipe supplied.</returns>
-        public bool TryGet(string name, out Recipe recipe)
+        private static void InitializeCaches()
         {
-            return _recipes.TryGetValue(name, out recipe);
+            _blueprintCache = new Dictionary<string, JsonObject>();
+            _memoryStreamCache = new Dictionary<JsonValue, MemoryStream>();
+            _serializerCache = new Dictionary<Type, DataContractJsonSerializer>();
         }
 
-        /// <summary>
-        /// Retrieves a Recipe instance for the given name.
-        /// </summary>
-        /// <param name="name">A string giving the recipe name</param>
-        /// <returns>A recipe instance with the indicated name.</returns>
-        public Recipe Get(string name)
+        private static void DiscardCaches()
         {
-            return _recipes[name];
+            _blueprintCache = null;
+            _memoryStreamCache = null;
+            _serializerCache = null;
         }
 
-        /// <summary>
-        /// This static method is used to create a RecipeBook instance from a source of Json text.
-        /// The Json text must take the form of an object containing one or more recipes.  Each
-        /// recipe has its name as a key and the corresponding object value should contain a set
-        /// of key/value pairs where the key is either the name of a Component subtype or the special
-        /// key 'Prototype'.  The value for Component subtypes should be a Json object describing that
-        /// subtype.  The value for Prototype should be the name of another recipe whose Component subtypes
-        /// will be included in the current recipe (this is recursive and must not be circular).
-        /// </summary>
-        /// <param name="source">A TextReader subtype for the Json source text</param>
-        /// <returns>A new instance of RecipeBook containing the supplied recipes</returns>
-        public static RecipeBook Load(TextReader source)
+        private static MemoryStream GetMemoryStreamFor(JsonValue val)
         {
-            var book = new RecipeBook();
-            using (var reader = new JsonTextReader(source))
+            MemoryStream ms;
+            if (!_memoryStreamCache.TryGetValue(val, out ms))
             {
-                if (!reader.Read() || (reader.TokenType != JsonToken.StartObject))
-                    throw new JsonException("Missing expected start object token");
-                while (reader.Read() && (reader.TokenType == JsonToken.PropertyName))
-                {
-                    var recipeName = (string) reader.Value;
-                    var recipe = new Recipe(recipeName, book, reader);
-                    book._recipes[recipeName] = recipe;
-                }
-                if (reader.TokenType != JsonToken.EndObject)
-                    throw new JsonException("Unexpected end of input");
+                ms = new MemoryStream(Encoding.UTF8.GetBytes(val.ToString()));
+                _memoryStreamCache[val] = ms;
             }
-            return book;
+            ms.Seek(0, SeekOrigin.Begin);
+            return ms;
         }
+
+        private static DataContractJsonSerializer GetSerializerFor(Type ctype)
+        {
+            DataContractJsonSerializer ser;
+            if (!_serializerCache.TryGetValue(ctype, out ser))
+            {
+                ser = new DataContractJsonSerializer(ctype);
+                _serializerCache[ctype] = ser;
+            }
+            return ser;
+        }
+
+        private static void ExtractBlueprints(Stream stream)
+        {
+            JsonObject root = (JsonObject)JsonValue.Load(stream);
+            foreach (var item in root)
+            {
+                _blueprintCache[item.Key] = (JsonObject)item.Value;
+            }
+        }
+
+        private void ProcessBlueprints()
+        {
+            foreach(var blueprint in _blueprintCache)
+            {
+                ComponentsFor(blueprint.Key, blueprint.Value);
+            }
+        }
+
+        private IDictionary<Type, Component> ComponentsFor(string name, JsonObject obj)
+        {
+            IDictionary<Type, Component> list;
+            if (_recipes.TryGetValue(name, out list))
+                return list;
+            if (obj.ContainsKey(PrototypeKeyword))
+            {
+                var proto = (string)obj[PrototypeKeyword];
+                list = new Dictionary<Type, Component>(ComponentsFor(proto, _blueprintCache[proto]));
+            } else {
+                list = new Dictionary<Type, Component>();
+            }
+            foreach(var item in obj) {
+                if (item.Key == PrototypeKeyword) continue;
+                Type ctype = Peanuts.GetType(item.Key);
+                var ser = GetSerializerFor(ctype);
+                var ms = GetMemoryStreamFor(item.Value);
+                Component comp = (Component) ser.ReadObject(ms);
+                Component proto;
+                if (list.TryGetValue(ctype, out proto))
+                {
+                    var jobj = (JsonObject) item.Value;
+                    var merged = (Component)proto.Clone();
+                    foreach (var finfo in ctype.GetFields(BindingFlags.Public))
+                    {
+                        if (jobj.ContainsKey(finfo.Name))
+                            finfo.SetValue(merged, finfo.GetValue(comp));
+                    }
+                    foreach (var pinfo in ctype.GetProperties(BindingFlags.Public))
+                    {
+                        if (jobj.ContainsKey(pinfo.Name))
+                            pinfo.SetValue(merged, pinfo.GetValue(comp));
+                    }
+                    comp = merged;
+                }
+                list[ctype] = comp;
+            }
+            _recipes[name] = list;
+            return list;
+        }
+
+        private readonly IDictionary<string, IDictionary<Type, Component>> _recipes;
+
+        [ThreadStatic]
+        private static IDictionary<string, JsonObject> _blueprintCache;
+
+        [ThreadStatic]
+        private static IDictionary<JsonValue, MemoryStream> _memoryStreamCache;
+
+        [ThreadStatic]
+        private static IDictionary<Type, DataContractJsonSerializer> _serializerCache;
+
     }
 }

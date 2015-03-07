@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System;
 
 namespace Peanuts
 {
@@ -6,13 +6,15 @@ namespace Peanuts
     /// IdGenerator used to generate contextually unique integer identifiers for Entity instances.
     /// Is compatible with Json.Net serialization.
     /// </summary>
+    [Serializable] 
     public sealed class IdGenerator
     {
+        private int _lastId;
+
     	/// <summary>
     	/// The value of the last integer ID generated.
     	/// </summary>
-        [JsonProperty]
-        public int LastId { get; internal set; }
+        public int LastId { get { return _lastId; } internal set { _lastId = value; } }
 
         /// <summary>
         /// Construct an instance of IdGenerator.  Intended for advanced usage.

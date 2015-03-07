@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization.Formatters;
-using Newtonsoft.Json;
 
 namespace Peanuts
 {
@@ -25,27 +23,9 @@ namespace Peanuts
         }
 
         /// <summary>
-        /// IdGenerator serializeable with Json.Net
-        /// Used to generate contextually unique identifier integers for Entity instances.
+        /// IdGenerator used to generate contextually unique identifier integers for Entity instances.
         /// </summary>
         public static IdGenerator EntityIdGenerator = new IdGenerator();
-
-        /// <summary>
-        /// OutputSettings is an instance of JsonSerializerSettings for use with Json.Net.
-        /// </summary>
-        public static readonly JsonSerializerSettings OutputSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Objects,
-            TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
-        };
-
-        /// <summary>
-        /// InputSettings is an instance of JsonSerializerSettings for use with Json.Net.
-        /// </summary>
-        public static readonly JsonSerializerSettings InputSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Objects
-        };
 
         internal static int NumberOfTypes()
         {
@@ -65,6 +45,15 @@ namespace Peanuts
         internal static Type GetType(int i)
         {
             return _types[i];
+        }
+
+        /// <summary>
+        /// AllTypes is for use with DataContract serializers to extract known type information.
+        /// </summary>
+        /// <returns>An enumeration of all Component subtypes.</returns>
+        public static IEnumerable<Type> AllTypes()
+        {
+            return _types;
         }
 
         private const int InitCollSize = 64;
