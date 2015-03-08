@@ -14,5 +14,4 @@
     {
         public int SomeInt { get; set; }
     }
-
 }

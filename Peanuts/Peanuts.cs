@@ -27,6 +27,27 @@ namespace Peanuts
         /// </summary>
         public static IdGenerator EntityIdGenerator = new IdGenerator();
 
+        /// <summary>
+        /// Extension method to convert enumerables of Entities to arrays of EntityIds
+        /// </summary>
+        /// <param name="entities">An enumerable Entity collection.</param>
+        /// <returns>An array of integer Entity ids.</returns>
+        public static int[] ToIdArray(this IEnumerable<Entity> entities)
+        {
+            return entities.Select(e => e.Id).ToArray();
+        }
+
+        /// <summary>
+        /// Extension method to convert enumerables of Entity Ids to arrays of Entities.
+        /// </summary>
+        /// <param name="entityIds">An enumerable Entity Id collection.</param>
+        /// <param name="group">The Group instance managing the Entities.</param>
+        /// <returns>An array of Entities.</returns>
+        public static Entity[] ToEntityArray(this IEnumerable<int> entityIds, Group group)
+        {
+            return entityIds.Select(id => group.Get(id)).ToArray();
+        }
+
         internal static int NumberOfTypes()
         {
             return _types.Count;

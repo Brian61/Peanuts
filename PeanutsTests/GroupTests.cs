@@ -20,7 +20,11 @@ namespace Peanuts.Tests
         public void MakeBagTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
+            RecipeBook book;
+            using (var stream = RecipeBookTests.GetSampleStream())
+            {
+                book = new RecipeBook(stream);
+            }
             var group = new Group();
             Entity entity = null;
             Assert.DoesNotThrow(() => entity = group.NewEntity(book, "RecipeA"));
@@ -31,7 +35,11 @@ namespace Peanuts.Tests
         public void MakeBagTest1()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
+            RecipeBook book;
+            using (var stream = RecipeBookTests.GetSampleStream())
+            {
+                book = new RecipeBook(stream);
+            }
             var group = new Group();
             var entA = group.NewEntity(book, "RecipeA");
             Entity entB = null;
@@ -131,7 +139,11 @@ namespace Peanuts.Tests
         public void MorphTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
+            RecipeBook book;
+            using (var stream = RecipeBookTests.GetSampleStream())
+            {
+                book = new RecipeBook(stream);
+            }
             var group = new Group();
             var entA = group.NewEntity(book, "RecipeA");
             MockEntityA mna = null;
@@ -155,7 +167,11 @@ namespace Peanuts.Tests
         public void DiscardTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
+            RecipeBook book;
+            using (var stream = RecipeBookTests.GetSampleStream())
+            {
+                book = new RecipeBook(stream);
+            }
             var group = new Group();
             var entA = group.NewEntity(book,"RecipeA");
             var bid = entA.Id;
@@ -170,7 +186,11 @@ namespace Peanuts.Tests
         public void SerializeTest()
         {
             Peanuts.Initialize();
-            var book = RecipeBook.Load(RecipeBookTests.GetSampleStream());
+            RecipeBook book;
+            using (var stream = RecipeBookTests.GetSampleStream())
+            {
+                book = new RecipeBook(stream);
+            }
             var group = new Group();
             group.NewEntity(book, "RecipeA");
             group.NewEntity(book, "RecipeB");

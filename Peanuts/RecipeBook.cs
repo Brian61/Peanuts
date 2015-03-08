@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Json;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Serialization.Json;
 using System.Text;
 
@@ -20,21 +19,6 @@ namespace Peanuts
         /// of a prototype recipe.
         /// </summary>
         public const string PrototypeKeyword = "Prototype";
-
-        /// <summary>
-        /// Create a new RecipeBook from a stream.
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <returns>A new RecipeBook instance.</returns>
-        public static RecipeBook Load(Stream stream)
-        {
-            var book = new RecipeBook();
-            InitializeCaches();
-            ExtractBlueprints(stream);
-            book.ProcessBlueprints();
-            DiscardCaches();
-            return book;
-        }
 
         /// <summary>
         /// Test for existance of a recipe in this book.
@@ -61,116 +45,83 @@ namespace Peanuts
             return _recipes[recipeName].Values;
         }
 
-        private RecipeBook()
+        /// <summary>
+        /// Create a new RecipeBook.
+        /// </summary>
+        public RecipeBook()
         {
             _recipes = new Dictionary<string, IDictionary<Type, Component>>();
         }
 
-        private static void InitializeCaches()
+        /// <summary>
+        /// Create a new RecipeBook from a stream.
+        /// </summary>
+        /// <param name="stream">The Stream object containing a json recipe colleciton.</param>
+        public RecipeBook(Stream stream) : this()
         {
-            _blueprintCache = new Dictionary<string, JsonObject>();
-            _memoryStreamCache = new Dictionary<JsonValue, MemoryStream>();
-            _serializerCache = new Dictionary<Type, DataContractJsonSerializer>();
+            Load(stream);
         }
 
-        private static void DiscardCaches()
-        {
-            _blueprintCache = null;
-            _memoryStreamCache = null;
-            _serializerCache = null;
-        }
-
-        private static MemoryStream GetMemoryStreamFor(JsonValue val)
-        {
-            MemoryStream ms;
-            if (!_memoryStreamCache.TryGetValue(val, out ms))
-            {
-                ms = new MemoryStream(Encoding.UTF8.GetBytes(val.ToString()));
-                _memoryStreamCache[val] = ms;
-            }
-            ms.Seek(0, SeekOrigin.Begin);
-            return ms;
-        }
-
-        private static DataContractJsonSerializer GetSerializerFor(Type ctype)
-        {
-            DataContractJsonSerializer ser;
-            if (!_serializerCache.TryGetValue(ctype, out ser))
-            {
-                ser = new DataContractJsonSerializer(ctype);
-                _serializerCache[ctype] = ser;
-            }
-            return ser;
-        }
-
-        private static void ExtractBlueprints(Stream stream)
+        /// <summary>
+        /// Loads a RecipeBook from a Stream of Json encoded recipes.
+        /// Will add to the current recipe dictionary and replace any with
+        /// the same recipe name.
+        /// </summary>
+        /// <param name="stream">A Stream containing Json encoded recipes.</param>
+        public void Load(Stream stream)
         {
             JsonObject root = (JsonObject)JsonValue.Load(stream);
-            foreach (var item in root)
-            {
-                _blueprintCache[item.Key] = (JsonObject)item.Value;
-            }
+            var list = root.Keys.ToList();
+            list.ForEach(name => MergePrototype(name, root));
+            list.ForEach(name => _recipes[name] = ComponentsFor(root[name]));
+        }
+ 
+        private static JsonValue MergeValueObjects(JsonValue proto, JsonValue derived)
+        {
+            var protoObj = proto as JsonObject;
+            var derivedObj = derived as JsonObject;
+            var merged = new JsonObject(protoObj);
+            foreach (var kvp in derivedObj)
+                merged[kvp.Key] = kvp.Value;
+            return merged;
         }
 
-        private void ProcessBlueprints()
+        private static JsonObject MergePrototype(string name, JsonObject root)
         {
-            foreach(var blueprint in _blueprintCache)
+            var target = root[name] as JsonObject;
+            JsonValue protoName;
+            if (!target.TryGetValue(PrototypeKeyword, out protoName))
+                return target;
+            var proto = MergePrototype((string)protoName, root);
+            target.Remove(PrototypeKeyword);
+            var merged = new JsonObject(proto);
+            foreach (var kvp in target)
             {
-                ComponentsFor(blueprint.Key, blueprint.Value);
+                JsonValue mval;
+                merged[kvp.Key] = !merged.TryGetValue(kvp.Key, out mval) ? kvp.Value
+                    : MergeValueObjects(mval, kvp.Value);
             }
+            root[name] = merged;
+            return merged;
         }
 
-        private IDictionary<Type, Component> ComponentsFor(string name, JsonObject obj)
+        private IDictionary<Type, Component> ComponentsFor(JsonValue recipe)
         {
-            IDictionary<Type, Component> list;
-            if (_recipes.TryGetValue(name, out list))
-                return list;
-            if (obj.ContainsKey(PrototypeKeyword))
+            var obj = recipe as JsonObject;
+            var dict = new Dictionary<Type, Component>();
+            foreach (var kvp in obj)
             {
-                var proto = (string)obj[PrototypeKeyword];
-                list = new Dictionary<Type, Component>(ComponentsFor(proto, _blueprintCache[proto]));
-            } else {
-                list = new Dictionary<Type, Component>();
-            }
-            foreach(var item in obj) {
-                if (item.Key == PrototypeKeyword) continue;
-                Type ctype = Peanuts.GetType(item.Key);
-                var ser = GetSerializerFor(ctype);
-                var ms = GetMemoryStreamFor(item.Value);
-                Component comp = (Component) ser.ReadObject(ms);
-                Component proto;
-                if (list.TryGetValue(ctype, out proto))
+                var ctype = Peanuts.GetType(kvp.Key);
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(kvp.Value.ToString())))
                 {
-                    var jobj = (JsonObject) item.Value;
-                    var merged = (Component)proto.Clone();
-                    foreach (var finfo in ctype.GetFields(BindingFlags.Public))
-                    {
-                        if (jobj.ContainsKey(finfo.Name))
-                            finfo.SetValue(merged, finfo.GetValue(comp));
-                    }
-                    foreach (var pinfo in ctype.GetProperties(BindingFlags.Public))
-                    {
-                        if (jobj.ContainsKey(pinfo.Name))
-                            pinfo.SetValue(merged, pinfo.GetValue(comp));
-                    }
-                    comp = merged;
+                    stream.Seek(0, SeekOrigin.Begin);
+                    var dcjser = new DataContractJsonSerializer(ctype);
+                    dict[ctype] = dcjser.ReadObject(stream) as Component;
                 }
-                list[ctype] = comp;
             }
-            _recipes[name] = list;
-            return list;
+            return dict;
         }
 
         private readonly IDictionary<string, IDictionary<Type, Component>> _recipes;
-
-        [ThreadStatic]
-        private static IDictionary<string, JsonObject> _blueprintCache;
-
-        [ThreadStatic]
-        private static IDictionary<JsonValue, MemoryStream> _memoryStreamCache;
-
-        [ThreadStatic]
-        private static IDictionary<Type, DataContractJsonSerializer> _serializerCache;
-
     }
 }

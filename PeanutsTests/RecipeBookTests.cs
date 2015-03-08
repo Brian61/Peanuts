@@ -20,6 +20,7 @@ namespace Peanuts.Tests
                         }
                 }
 }";
+
         public static Stream GetSampleStream()
         {
             var js = JsonSample.Replace('\'', '"');
@@ -29,13 +30,20 @@ namespace Peanuts.Tests
         [Test()]
         public void LoadTest()
         {
-            Assert.DoesNotThrow(() => RecipeBook.Load(GetSampleStream()));
+            using (var stream = RecipeBookTests.GetSampleStream())
+            {
+                Assert.DoesNotThrow(() => new RecipeBook(stream));
+            }
         }
 
         [Test()]
         public void ContainsTest()
         {
-            var book = RecipeBook.Load(GetSampleStream());
+            RecipeBook book;
+            using (var stream = GetSampleStream())
+            {
+                book = new RecipeBook(stream);
+            }
             Assert.IsTrue(book.Contains("RecipeA"));
             var tsa = book.GetTagSetFor("RecipeA");
             var tsb = new TagSet(typeof(MockEntityA));

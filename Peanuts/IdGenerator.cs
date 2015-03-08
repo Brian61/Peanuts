@@ -6,14 +6,14 @@ namespace Peanuts
     /// IdGenerator used to generate contextually unique integer identifiers for Entity instances.
     /// Is compatible with Json.Net serialization.
     /// </summary>
-    [Serializable] 
+    [Serializable]
     public sealed class IdGenerator
     {
         private int _lastId;
 
-    	/// <summary>
-    	/// The value of the last integer ID generated.
-    	/// </summary>
+        /// <summary>
+        /// The value of the last integer ID generated.
+        /// </summary>
         public int LastId { get { return _lastId; } internal set { _lastId = value; } }
 
         /// <summary>
