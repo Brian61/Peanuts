@@ -112,7 +112,6 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
-    <Compile Include="TagSet.cs" />
     <Compile Include="RecipeBook.cs" />
     <Compile Include="Group.cs" />
   </ItemGroup>

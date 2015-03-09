@@ -91,19 +91,6 @@ namespace Peanuts.Tests
         }
 
         [Test()]
-        public void ContainsTest()
-        {
-            Peanuts.Initialize();
-            var comps = new List<Component>();
-            comps.Add(new MockComponentA());
-            Entity entity = new Entity(comps);
-            var key = new TagSet(typeof(MockComponentA));
-            Assert.True(entity.Contains(key));
-            key = new TagSet(typeof(MockComponentA), typeof(MockComponentB));
-            Assert.False(entity.Contains(key));
-        }
-
-        [Test()]
         public void ContainsTest1()
         {
             Peanuts.Initialize();

@@ -15,14 +15,6 @@ namespace Peanuts
         private Group _group;
 
         /// <summary>
-        /// Gets the lock tag.
-        /// </summary>
-        /// <value>
-        /// The lock tag.
-        /// </value>
-        public TagSet LockTag { get; private set; }
-
-        /// <summary>
         /// The unique integer id of the Entity instance.
         /// </summary>
         public int Id { get; private set; }
@@ -41,7 +33,6 @@ namespace Peanuts
                 var ptype = Peanuts.GetType(name);
                 var comp = enumerator.Value as Component;
                 _compsByType[ptype] = comp;
-                LockTag.Set(Peanuts.GetId(ptype));
             }
         }
 
@@ -60,7 +51,6 @@ namespace Peanuts
             Id = id;
             _group = null;
             _compsByType = new Dictionary<Type, Component>();
-            LockTag = new TagSet();
         }
 
         /// <summary>
@@ -132,16 +122,6 @@ namespace Peanuts
         }
 
         /// <summary>
-        /// This is the 'key-fits-lock' test that checks to see if the indicated TagSet describes a subset of the contents.
-        /// </summary>
-        /// <param name="key">A TagSet object describing the Component subtypes of interest.</param>
-        /// <returns>True if all of the subtypes indicated by key exist in this Entity.</returns>
-        public bool Contains(TagSet key)
-        {
-            return key.KeyFitsLock(LockTag);
-        }
-
-        /// <summary>
         /// Test for existance of a given Component subtype in this entity.
         /// </summary>
         /// <param name="compType">The Component subtype to check.</param>
@@ -175,7 +155,6 @@ namespace Peanuts
             var compType = component.GetType();
             var cid = Peanuts.GetId(compType);
             _compsByType[compType] = component;
-            LockTag.Set(cid);
             if (null != _group)
                 NotifyChangeComponentSet(compType, true);
         }
@@ -189,7 +168,6 @@ namespace Peanuts
             var compType = component.GetType();
             var cid = Peanuts.GetId(compType);
             _compsByType.Remove(compType);
-            LockTag.Clear(cid);
             if (null != _group)
                 NotifyChangeComponentSet(compType, false);
         }

@@ -96,7 +96,6 @@ namespace Peanuts
         /// <returns>The Entity instance for id.</returns>
         public Entity this[int id] {
             get { return Get(id); }
-////            private set { throw new NotImplementedException(); }
         }
 
         /// <summary>

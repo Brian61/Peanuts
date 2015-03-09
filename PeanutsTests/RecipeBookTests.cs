@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Peanuts.Tests
 {
@@ -46,9 +47,9 @@ namespace Peanuts.Tests
                 JsonRecipe.LoadCollection(book, stream);
             }
             Assert.IsTrue(book.Contains("RecipeA"));
-            var tsa = new TagSet(book.GetRecipe("RecipeA").Components());
-            var tsb = new TagSet(typeof(MockComponentA));
-            Assert.IsTrue(0 == tsa.CompareTo(tsb));
+            var tsa = book.GetRecipe("RecipeA").Components().Select(c => c.GetType());
+            Assert.IsTrue(tsa.Contains(typeof(MockComponentA)));
+            Assert.AreEqual(1, tsa.Count());
             Assert.IsTrue(book.Contains("RecipeB"));
             Assert.IsFalse(book.Contains("mananana"));
         }
