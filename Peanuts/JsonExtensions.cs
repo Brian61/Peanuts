@@ -6,7 +6,10 @@ using System.Text;
 
 namespace Peanuts
 {
-    static class JsonExtensions
+    /// <summary>
+    /// Extensions for JsonValue types.
+    /// </summary>
+    public static class JsonExtensions
     {
         /// <summary>
         /// Merge the target JsonObject into the prototype JsonObject to the indicated depth.

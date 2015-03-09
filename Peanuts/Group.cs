@@ -79,7 +79,6 @@ namespace Peanuts
             NotifyListeners(entity, null, false);
         }
         
- 
         /// <summary>
         /// Get a Entity instance corresponding to an integer id.
         /// </summary>
@@ -97,7 +96,7 @@ namespace Peanuts
         /// <returns>The Entity instance for id.</returns>
         public Entity this[int id] {
             get { return Get(id); }
-//            private set { throw new NotImplementedException(); }
+////            private set { throw new NotImplementedException(); }
         }
 
         /// <summary>

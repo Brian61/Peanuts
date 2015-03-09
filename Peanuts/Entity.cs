@@ -11,8 +11,8 @@ namespace Peanuts
     [Serializable]
     public sealed class Entity : ISerializable
     {
-        private Group _group;
         private readonly Dictionary<Type, Component> _compsByType;
+        private Group _group;
 
         /// <summary>
         /// Gets the lock tag.
@@ -176,7 +176,7 @@ namespace Peanuts
             var cid = Peanuts.GetId(compType);
             _compsByType[compType] = component;
             LockTag.Set(cid);
-            if(null != _group)
+            if (null != _group)
                 NotifyChangeComponentSet(compType, true);
         }
 
@@ -190,7 +190,7 @@ namespace Peanuts
             var cid = Peanuts.GetId(compType);
             _compsByType.Remove(compType);
             LockTag.Clear(cid);
-            if(null != _group)
+            if (null != _group)
                 NotifyChangeComponentSet(compType, false);
         }
 

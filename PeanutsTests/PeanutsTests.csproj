@@ -59,6 +59,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="EntityTests.cs" />
+    <Compile Include="GroupTests.cs" />
     <Compile Include="TagSetTests.cs" />
     <Compile Include="MockComponent.cs" />
     <Compile Include="ComponentTests.cs" />

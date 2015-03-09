@@ -10,7 +10,6 @@ namespace Peanuts
     {
         private Dictionary<string, IRecipe> _recipes;
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="RecipeBook"/> class.
         /// </summary>
@@ -33,7 +32,7 @@ namespace Peanuts
         /// Gets the recipe.
         /// </summary>
         /// <param name="name">The name.</param>
-        /// <returns></returns>
+        /// <returns>The recipe.</returns>
         public IRecipe GetRecipe(String name)
         {
             return _recipes[name];
