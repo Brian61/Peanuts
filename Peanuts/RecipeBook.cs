@@ -46,5 +46,18 @@ namespace Peanuts
         {
             _recipes[recipe.Name] = recipe;
         }
+
+        /// <summary>
+        /// Adds the book.
+        /// </summary>
+        /// <param name="book">The book.</param>
+        /// <returns>This instance(For chaining).</returns>
+        public RecipeBook AddBook(RecipeBook book)
+        {
+            foreach (var kvp in book._recipes) {
+                _recipes[kvp.Key] = kvp.Value;
+            }
+            return this;
+        }
     }
 }
