@@ -84,6 +84,15 @@ namespace Peanuts
         /// <summary>
         /// Initializes a new instance of the <see cref="Entity"/> class.
         /// </summary>
+        /// <param name="recipe">The recipe.</param>
+        public Entity(IRecipe recipe)
+            :this(recipe.Components())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// </summary>
         /// <param name="components">The components.</param>
         public Entity(params Component[] components)
             : this(components as IEnumerable<Component>)
