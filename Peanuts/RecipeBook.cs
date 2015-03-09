@@ -48,6 +48,17 @@ namespace Peanuts
         }
 
         /// <summary>
+        /// Adds the recipe.
+        /// </summary>
+        /// <param name="recipes">The recipes.</param>
+        public void AddRecipe(params IRecipe[] recipes)
+        {
+            foreach (var recipe in recipes) {
+                _recipes[recipe.Name] = recipe;
+            }
+        }
+
+        /// <summary>
         /// Adds the book.
         /// </summary>
         /// <param name="book">The book.</param>
