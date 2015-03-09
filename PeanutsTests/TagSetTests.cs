@@ -9,7 +9,7 @@ namespace Peanuts.Tests
         public void TagSetTest()
         {
             Peanuts.Initialize();
-            var a = new TagSet(typeof (MockEntityA));
+            var a = new TagSet(typeof (MockComponentA));
             Assert.IsNotNull(a);
         }
 
@@ -17,8 +17,8 @@ namespace Peanuts.Tests
         public void KeyFitsLockTest()
         {
             Peanuts.Initialize();
-            var a = new TagSet(typeof (MockEntityA));
-            var b = new TagSet(typeof(MockEntityA), typeof(MockEntityB));
+            var a = new TagSet(typeof (MockComponentA));
+            var b = new TagSet(typeof(MockComponentA), typeof(MockComponentB));
             Assert.IsTrue(a.KeyFitsLock(b));
             Assert.IsFalse(b.KeyFitsLock(a));
         }

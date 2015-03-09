@@ -9,8 +9,8 @@ namespace Peanuts.Tests
         public void CloneTest()
         {
             Peanuts.Initialize();
-            var a = new MockEntityA() {SomeText = "This should work!"};
-            var b = a.Clone() as MockEntityA;
+            var a = new MockComponentA() {SomeText = "This should work!"};
+            var b = a.Clone() as MockComponentA;
             Assert.NotNull(b);
             Assert.AreEqual(a.SomeText, b.SomeText);
         }

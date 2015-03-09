@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Peanuts
 {
@@ -11,10 +11,17 @@ namespace Peanuts
     [Serializable]
     public sealed class Entity : ISerializable
     {
+        private Group _group;
         private readonly Dictionary<Type, Component> _compsByType;
-       
-        internal TagSet LockTag { get; private set; }
-        
+
+        /// <summary>
+        /// Gets the lock tag.
+        /// </summary>
+        /// <value>
+        /// The lock tag.
+        /// </value>
+        public TagSet LockTag { get; private set; }
+
         /// <summary>
         /// The unique integer id of the Entity instance.
         /// </summary>
@@ -22,61 +29,80 @@ namespace Peanuts
 
         #region ISerializable implementation
         private Entity(SerializationInfo info, StreamingContext context)
+            : this(0)
         {
-            _compsByType = new Dictionary<Type, Component>();
             Id = info.GetInt32("Id");
+            Peanuts.EntityIdGenerator.EnsureGreaterThan(Id);
             var enumerator = info.GetEnumerator();
-            while (enumerator.MoveNext()) 
+            while (enumerator.MoveNext())
             {
                 var name = enumerator.Current.Name;
                 if (name == "Id") continue;
                 var ptype = Peanuts.GetType(name);
                 var comp = enumerator.Value as Component;
                 _compsByType[ptype] = comp;
+                LockTag.Set(Peanuts.GetId(ptype));
             }
-            LockTag = new TagSet(_compsByType.Keys);
         }
-        
+
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue("Id", Id, typeof(Int32));
-            foreach (var kv in _compsByType) 
+            foreach (var kv in _compsByType)
             {
                 info.AddValue(kv.Key.Name, kv.Value, kv.Key);
             }
         }
         #endregion
-        
-        internal Dictionary<Type, Component> GetDictionary()
-        {
-            return _compsByType;
-        }
 
-        internal Entity(int id, Dictionary<Type, Component> contents)
+        private Entity(int id)
         {
             Id = id;
-            Peanuts.EntityIdGenerator.EnsureGreaterThan(id);
-            _compsByType = contents;
-            LockTag = new TagSet(contents.Keys);
-        }
-        
-        /// <summary>
-        /// Empty entity intended for return value when no entity is available and
-        /// null return is undesirable.
-        /// </summary>
-        public static readonly Entity Empty = new Entity(0, new Dictionary<Type, Component>());
-
-        internal Entity(IEnumerable<Component> components)
-        {
+            _group = null;
             _compsByType = new Dictionary<Type, Component>();
             LockTag = new TagSet();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// </summary>
+        public Entity()
+            : this(Peanuts.EntityIdGenerator.Next())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// </summary>
+        /// <param name="components">The components.</param>
+        public Entity(IEnumerable<Component> components)
+            : this()
+        {
             Id = Peanuts.EntityIdGenerator.Next();
             foreach (var p in components) Add(p);
         }
-    
-        internal IEnumerable<Component> GetAll()
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        public Entity(Entity source)
+            : this(source._compsByType.Values.Select(c => c.Clone() as Component))
         {
-            return _compsByType.Values;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// </summary>
+        /// <param name="components">The components.</param>
+        public Entity(params Component[] components)
+            : this(components as IEnumerable<Component>)
+        {
+        }
+
+        internal void SetGroup(Group group)
+        {
+            _group = group;
         }
 
         /// <summary>
@@ -134,37 +160,52 @@ namespace Peanuts
         {
             return compTypes.All(_compsByType.ContainsKey);
         }
-        
-        internal void Add(Component component)
+
+        private void NotifyChangeComponentSet(Type ctype, bool added)
+        {
+            _group.NotifyListeners(this, ctype, added);
+        }
+
+        /// <summary>
+        /// Adds the specified component.
+        /// </summary>
+        /// <param name="component">The component.</param>
+        public void Add(Component component)
         {
             var compType = component.GetType();
             var cid = Peanuts.GetId(compType);
             _compsByType[compType] = component;
             LockTag.Set(cid);
+            if(null != _group)
+                NotifyChangeComponentSet(compType, true);
         }
 
-        internal void Remove(Component component)
+        /// <summary>
+        /// Removes the specified component.
+        /// </summary>
+        /// <param name="component">The component.</param>
+        public void Remove(Component component)
         {
             var compType = component.GetType();
             var cid = Peanuts.GetId(compType);
             _compsByType.Remove(compType);
             LockTag.Clear(cid);
+            if(null != _group)
+                NotifyChangeComponentSet(compType, false);
         }
 
-        internal void Morph(Entity prototype)
+        /// <summary>
+        /// Morphes the specified prototype.
+        /// </summary>
+        /// <param name="prototype">The prototype.</param>
+        public void Morph(Entity prototype)
         {
             var tbr = _compsByType.Keys.Except(prototype._compsByType.Keys).ToList();
             var tba = prototype._compsByType.Keys.Except(_compsByType.Keys).ToList();
-            foreach (var ct in tbr) 
+            foreach (var ct in tbr)
                 Remove(_compsByType[ct]);
             foreach (var ct in tba)
                 Add((Component)prototype._compsByType[ct].Clone());
-        }
-
-        internal void ClearAll()
-        {
-            _compsByType.Clear();
-            LockTag.ClearAll();
         }
     }
 }

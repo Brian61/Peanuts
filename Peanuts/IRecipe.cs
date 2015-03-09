@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Peanuts
 {
+    /// <summary>
+    /// The interface to Entity recipes.
+    /// </summary>
     public interface IRecipe
     {
         /// <summary>

@@ -9,13 +9,13 @@ namespace Peanuts.Tests
     {
         public const string JsonSample = @"{
     'RecipeA':  {
-            'MockEntityA': {
+            'MockComponentA': {
                 'SomeText': 'Wee!!'
                         }
                 },
     'RecipeB':  {
             'Prototype': 'RecipeA',
-            'MockEntityB': {
+            'MockComponentB': {
                 'SomeFloat': 4.0
                         }
                 }
@@ -47,7 +47,7 @@ namespace Peanuts.Tests
             }
             Assert.IsTrue(book.Contains("RecipeA"));
             var tsa = new TagSet(book.GetRecipe("RecipeA").Components());
-            var tsb = new TagSet(typeof(MockEntityA));
+            var tsb = new TagSet(typeof(MockComponentA));
             Assert.IsTrue(0 == tsa.CompareTo(tsb));
             Assert.IsTrue(book.Contains("RecipeB"));
             Assert.IsFalse(book.Contains("mananana"));
