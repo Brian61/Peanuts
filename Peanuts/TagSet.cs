@@ -35,6 +35,15 @@ namespace Peanuts
         {
         }
         
+        /// <summary>
+        /// Create a new TagSet described by a set of component instances.
+        /// </summary>
+        /// <param name="components">An IEnumerable(Component) instance.</param>
+        public TagSet(IEnumerable<Component> components)
+            : this(components.Select(c => c.GetType()))
+        {
+        }
+
         internal TagSet(TagSet other)
         {
             _bits = (uint[])other._bits.Clone();

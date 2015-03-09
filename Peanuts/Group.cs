@@ -79,20 +79,24 @@ namespace Peanuts
             return entity;
         }
 
-        private Entity NewEntityClone(IEnumerable<Component> source)
+        /// <summary>
+        /// Creates a new Entity from an IEnumerable(Component) source using clones of the components.
+        /// </summary>
+        /// <param name="source">An IEnumerable(Component) instance.</param>
+        /// <returns>A new entity.</returns>
+        public Entity NewEntity(IEnumerable<Component> source)
         {
-            return NewEntity(source.Select(c => c.Clone() as Component).ToArray());
+            return NewEntity(source.ToArray());
         }
 
         /// <summary>
-        /// Create a new instance of a Entity containing Component subtypes as specified in the given recipe.
+        /// Creates a new Entity using a recipe.
         /// </summary>
-        /// <param name="book">The RecipeBook containing the recipe.</param>
-        /// <param name="recipeName">The name of the recipe.</param>
-        /// <returns>A new Entity instance.</returns>
-        public Entity NewEntity(RecipeBook book, string recipeName)
+        /// <param name="recipe">The recipe.</param>
+        /// <returns>A new Entity instance</returns>
+        public Entity NewEntity(IRecipe recipe)
         {
-            return NewEntityClone(book.GetComponentsFor(recipeName));
+            return NewEntity(recipe.Components());
         }
 
         /// <summary>
@@ -102,7 +106,7 @@ namespace Peanuts
         /// <returns>A new Entity instance.</returns>
         public Entity NewEntity(Entity prototype)
         {
-            return NewEntityClone(prototype.GetAll());
+            return NewEntity(prototype.GetAll().Select(c => c.Clone() as Component));
         }
 
         /// <summary>

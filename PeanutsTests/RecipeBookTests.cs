@@ -30,22 +30,23 @@ namespace Peanuts.Tests
         [Test()]
         public void LoadTest()
         {
+            RecipeBook book = new RecipeBook();
             using (var stream = RecipeBookTests.GetSampleStream())
             {
-                Assert.DoesNotThrow(() => new RecipeBook(stream));
+                Assert.DoesNotThrow(() => JsonRecipe.LoadCollection(book, stream));
             }
         }
 
         [Test()]
         public void ContainsTest()
         {
-            RecipeBook book;
+            RecipeBook book = new RecipeBook();
             using (var stream = GetSampleStream())
             {
-                book = new RecipeBook(stream);
+                JsonRecipe.LoadCollection(book, stream);
             }
             Assert.IsTrue(book.Contains("RecipeA"));
-            var tsa = book.GetTagSetFor("RecipeA");
+            var tsa = new TagSet(book.GetRecipe("RecipeA").Components());
             var tsb = new TagSet(typeof(MockEntityA));
             Assert.IsTrue(0 == tsa.CompareTo(tsb));
             Assert.IsTrue(book.Contains("RecipeB"));
