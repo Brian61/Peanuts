@@ -138,6 +138,16 @@ namespace Peanuts
         /// <returns>True if all indicated subtypes are contained.</returns>
         public bool Contains(params Type[] compTypes)
         {
+            return Contains(compTypes as IEnumerable<Type>);
+        }
+
+        /// <summary>
+        /// Determines whether this Entity contains all of the given types.
+        /// </summary>
+        /// <param name="compTypes">The comp types.</param>
+        /// <returns>True if all types contained.</returns>
+        public bool Contains(IEnumerable<Type> compTypes)
+        {
             return compTypes.All(_compsByType.ContainsKey);
         }
 
