@@ -72,20 +72,12 @@ namespace Peanuts
             foreach (var p in components) Add(p);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Entity"/> class.
-        /// </summary>
-        /// <param name="source">The source.</param>
-        public Entity(Entity source)
+        private Entity(Entity source)
             : this(source._compsByType.Values.Select(c => c.Clone() as Component))
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Entity"/> class.
-        /// </summary>
-        /// <param name="recipe">The recipe.</param>
-        public Entity(IRecipe recipe)
+        private Entity(IRecipe recipe)
             :this(recipe.Components())
         {
         }
@@ -192,7 +184,7 @@ namespace Peanuts
         }
 
         /// <summary>
-        /// Morphes the specified prototype.
+        /// Morphes this entity to match the specified prototype.
         /// </summary>
         /// <param name="prototype">The prototype.</param>
         public void Morph(Entity prototype)
@@ -203,6 +195,26 @@ namespace Peanuts
                 Remove(_compsByType[ct]);
             foreach (var ct in tba)
                 Add((Component)prototype._compsByType[ct].Clone());
+        }
+
+        /// <summary>
+        /// Create a new Entity from a prototype.
+        /// </summary>
+        /// <param name="prototype">The prototype.</param>
+        /// <returns>A new Entity.</returns>
+        public static Entity FromPrototype(Entity prototype)
+        {
+            return new Entity(prototype);
+        }
+
+        /// <summary>
+        /// Create a new Entity from a recipe.
+        /// </summary>
+        /// <param name="recipe">The recipe.</param>
+        /// <returns>A new Entity.</returns>
+        public static Entity FromRecipe(IRecipe recipe)
+        {
+            return new Entity(recipe);
         }
     }
 }

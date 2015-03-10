@@ -41,7 +41,7 @@ namespace Peanuts.Tests
             comps.Add(new MockComponentA());
             Entity source = new Entity(comps);
             Entity entity = null;
-            Assert.DoesNotThrow(() => entity = new Entity(source));
+            Assert.DoesNotThrow(() => entity = Entity.FromPrototype(source));
             Assert.NotNull(entity);
             Assert.Greater(entity.Id, 0);
             Assert.True(entity.Contains(typeof(MockComponentA)));
